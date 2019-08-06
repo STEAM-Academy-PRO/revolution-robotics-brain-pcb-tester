@@ -22,4 +22,6 @@ void system_init(void)
     /* ondemand mode so the proper temp channel will always be selected */
     hri_supc_set_VREF_ONDEMAND_bit(SUPC);
     hri_supc_set_VREF_TSEN_bit(SUPC);
+
+    delay_init(SysTick);
 }

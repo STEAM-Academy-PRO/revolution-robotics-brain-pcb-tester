@@ -1054,7 +1054,13 @@
     <Compile Include="hri\hri_wdt_d51.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="led.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="test.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

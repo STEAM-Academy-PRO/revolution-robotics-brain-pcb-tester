@@ -1,3 +1,4 @@
+#include "test.h"
 #include "driver_init.h"
 
 #include <string.h>
@@ -6,9 +7,10 @@ int main(void)
 {
     system_init();
 
+    WS2812_Init();
+
     while (1)
     {
-
     }
 }
 

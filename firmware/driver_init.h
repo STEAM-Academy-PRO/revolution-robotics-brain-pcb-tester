@@ -27,9 +27,6 @@ extern "C" {
 #include <hpl_tc_base.h>
 #include <hal_delay.h>
 
-#include <hal_spi_m_dma.h>
-#include <hal_spi_m_sync.h>
-
 #include <hal_evsys.h>
 #include <tc_lite.h>
 
