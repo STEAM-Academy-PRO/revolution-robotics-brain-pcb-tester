@@ -7,6 +7,9 @@
 #include "test.h"
 
 #include <hal_delay.h>
+#include <hal_adc_sync.h>
+
+#include "utils.h"
 
 #define TEST_PULLUP_LED   ((uint8_t) 0u)
 #define TEST_CHARGER_LED  ((uint8_t) 1u)
@@ -14,6 +17,16 @@
 #define TEST_S1_LED       ((uint8_t) 3u)
 #define TEST_S2_LED       ((uint8_t) 4u)
 #define TEST_S3_LED       ((uint8_t) 5u)
+
+static struct adc_sync_descriptor adcs[2];
+
+static float map(float in, float min_in, float max_in, float min_out, float max_out)
+{
+    float in_fs = max_in - min_in;
+    float out_fs = max_out - min_out;
+
+    return (in - min_in) * (out_fs / in_fs) + min_out;
+}
 
 static void _indicate(uint8_t led, bool success)
 {
@@ -48,27 +61,37 @@ static bool _test_pullup(uint32_t gpio)
 
 static float _read_analog(uint32_t adc, uint32_t ch)
 {
+    uint16_t buffer[8];
     delay_ms(1u);
-    return 0.0f;
+    adc_sync_set_inputs(&adcs[adc], ch, ADC_CHN_INT_GND, 0u);
+    adc_sync_read_channel(&adcs[adc], 0u, (uint8_t*) buffer, ARRAY_SIZE(buffer));
+    uint16_t sum = 0u;
+    for (uint8_t i = 0u; i < ARRAY_SIZE(buffer); i++)
+    {
+        sum += buffer[i];
+    }
+    sum = sum / ARRAY_SIZE(buffer);
+
+    return map(sum, 0, 4095, 0, 3300); /* Vref = VDDANA */
 }
 
 static bool _analog_expect_0v(uint32_t adc, uint32_t ch)
 {
-    float voltage = _read_analog(adc, ch);
+    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
     
-    return -0.1f < voltage && voltage < 0.1f;
+    return voltage < 0.1f;
 }
 
 static bool _analog_expect_3v3(uint32_t adc, uint32_t ch)
 {
-    float voltage = _read_analog(adc, ch);
+    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
     
     return 3.2f < voltage && voltage < 3.4f;
 }
 
 static bool _analog_expect_5v(uint32_t adc, uint32_t ch)
 {
-    float voltage = _read_analog(adc, ch);
+    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
     
     return 4.9f < voltage && voltage < 5.1f;
 }
@@ -145,6 +168,14 @@ void test_init(void)
     gpio_set_pin_level(S1_IOVCC, false);
     gpio_set_pin_level(S2_IOVCC, false);
     gpio_set_pin_level(S3_IOVCC, false);
+    
+    hri_mclk_set_APBDMASK_ADC0_bit(MCLK);
+    hri_mclk_set_APBDMASK_ADC1_bit(MCLK);
+    hri_gclk_write_PCHCTRL_reg(GCLK, ADC0_GCLK_ID, CONF_GCLK_ADC0_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+    hri_gclk_write_PCHCTRL_reg(GCLK, ADC1_GCLK_ID, CONF_GCLK_ADC1_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+    adc_sync_init(&adcs[0], ADC0);
+    adc_sync_init(&adcs[1], ADC1);
 }
 
 void test_pullups(void)
