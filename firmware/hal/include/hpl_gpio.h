@@ -68,7 +68,7 @@ enum gpio_pull_mode { GPIO_PULL_OFF, GPIO_PULL_UP, GPIO_PULL_DOWN };
 /**
  * \brief PORT direction settins
  */
-enum gpio_direction { GPIO_DIRECTION_OFF, GPIO_DIRECTION_IN, GPIO_DIRECTION_OUT };
+enum gpio_direction { GPIO_DIRECTION_OFF, GPIO_DIRECTION_IN, GPIO_DIRECTION_OUT, GPIO_DIRECTION_INOUT };
 
 /**
  * \brief PORT group abstraction

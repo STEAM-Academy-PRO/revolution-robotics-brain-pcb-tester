@@ -66,6 +66,13 @@ static inline void _gpio_set_direction(const enum gpio_port port, const uint32_t
 		    PORT, port, PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_WRPINCFG | ((mask & 0xffff0000) >> 16));
 		break;
 
+	case GPIO_DIRECTION_INOUT:
+		hri_port_set_DIR_reg(PORT, port, mask);
+		hri_port_write_WRCONFIG_reg(PORT, port, PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_INEN | (mask & 0xffff));
+		hri_port_write_WRCONFIG_reg(
+		    PORT, port, PORT_WRCONFIG_HWSEL | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_INEN | ((mask & 0xffff0000) >> 16));
+		break;
+
 	default:
 		ASSERT(false);
 	}
@@ -96,18 +103,7 @@ static inline void _gpio_toggle_level(const enum gpio_port port, const uint32_t 
  */
 static inline uint32_t _gpio_get_level(const enum gpio_port port)
 {
-	uint32_t tmp;
-
-	CRITICAL_SECTION_ENTER();
-
-	uint32_t dir_tmp = hri_port_read_DIR_reg(PORT, port);
-
-	tmp = hri_port_read_IN_reg(PORT, port) & ~dir_tmp;
-	tmp |= hri_port_read_OUT_reg(PORT, port) & dir_tmp;
-
-	CRITICAL_SECTION_LEAVE();
-
-	return tmp;
+	return hri_port_read_IN_reg(PORT, port);
 }
 
 /**

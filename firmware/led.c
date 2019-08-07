@@ -80,6 +80,12 @@ static void _set_led(uint8_t led, uint8_t color)
             g = 24u;
             b = 0u;
             break;
+
+        case COLOR_BLUE:
+            r = 0u;
+            g = 8u;
+            b = 16u;
+            break;
     }
 
     write_led_byte(led, 0u, g);
@@ -105,7 +111,12 @@ void WS2812_Init(void)
 {
     _spi_Init();
 
-    uint8_t colors[16] = { COLOR_OFF };
+    uint8_t colors[16] = { 0 };
+
+    for (uint8_t i = 0u; i < 16u; i++)
+    {
+        colors[i] = COLOR_BLUE;
+    }
 
     memset(frame_leds, LED_VAL_RES, sizeof(frame_leds));
 

@@ -233,7 +233,6 @@
 /* Motor drivers */
 #define MOTOR_DRIVER_0_YELLOW   PB23
 #define MOTOR_DRIVER_0_EN       PB20
-#define MOTOR_DRIVER_0_FAULT    PC13
 
 #define MOTOR_DRIVER_0_CH_A_PWM0_PIN         PB08
 #define MOTOR_DRIVER_0_CH_A_PWM1_PIN         PB09
@@ -243,21 +242,19 @@
 
 #define MOTOR_DRIVER_1_YELLOW   PB13
 #define MOTOR_DRIVER_1_EN       PD01
-#define MOTOR_DRIVER_1_FAULT    PB23
 
 #define MOTOR_DRIVER_1_CH_A_PWM0_PIN         PA04
 #define MOTOR_DRIVER_1_CH_A_PWM1_PIN         PA05
-                     
+
 #define MOTOR_DRIVER_1_CH_B_PWM0_PIN         PA14
 #define MOTOR_DRIVER_1_CH_B_PWM1_PIN         PA15
 
 #define MOTOR_DRIVER_2_YELLOW   PC13
 #define MOTOR_DRIVER_2_EN       PA18
-#define MOTOR_DRIVER_2_FAULT    PB13
 
 #define MOTOR_DRIVER_2_CH_A_PWM0_PIN         PA06
 #define MOTOR_DRIVER_2_CH_A_PWM1_PIN         PA07
-                     
+
 #define MOTOR_DRIVER_2_CH_B_PWM0_PIN         PB10
 #define MOTOR_DRIVER_2_CH_B_PWM1_PIN         PB11
 
@@ -346,5 +343,10 @@
 #define ADC_CH_BAT_VOLTAGE      13
 
 #define ADC_CHN_INT_GND       0x18
+
+#define TEST_ENABLE     PD21
+#define TEST_CHARGER_EN PC18
+
+#define AMP_EN_sense    PC22
 
 #endif // ATMEL_START_PINS_H_INCLUDED

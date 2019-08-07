@@ -1060,6 +1060,9 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="test.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="test.h">
       <SubType>compile</SubType>
     </Compile>

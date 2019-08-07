@@ -3,11 +3,36 @@
 
 #include <string.h>
 
+#define TEST_PULLUP_LED   ((uint8_t) 0u)
+#define TEST_CHARGER_LED  ((uint8_t) 1u)
+
+static void _indicate(uint8_t led, bool success)
+{
+    if (success)
+    {
+        WS2812_SetLed(led, COLOR_GREEN);
+    }
+    else
+    {
+        WS2812_SetLed(led, COLOR_RED);
+    }
+}
+
 int main(void)
 {
     system_init();
 
-    WS2812_Init();
+    test_init();
+
+    bool pullup_result = test_pullups();
+    _indicate(TEST_PULLUP_LED, pullup_result);
+
+    bool charger_result = test_charger();
+    _indicate(TEST_CHARGER_LED, charger_result);
+
+    test_sensor_ports();
+    test_motor_ports();
+    test_imu();
 
     while (1)
     {
