@@ -23,6 +23,7 @@
 #define TEST_M3_LED       ((uint8_t) 9u)
 #define TEST_M4_LED       ((uint8_t) 10u)
 #define TEST_M5_LED       ((uint8_t) 11u)
+#define TEST_IMU_LED      ((uint8_t) 12u)
 
 static struct adc_sync_descriptor adcs[2];
 
@@ -416,5 +417,12 @@ void test_motor_ports(void)
 
 void test_imu(void)
 {
+    imu_init();
 
+    bool success = true;
+    
+    success &= imu_read_whoami() == IMU_EXPECTED_WHOAMI;
+    success &= imu_run_selftest();
+    
+    _indicate(TEST_IMU_LED, success);
 }

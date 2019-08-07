@@ -19,6 +19,8 @@
 #define COLOR_GREEN   ((uint8_t) 2u)
 #define COLOR_BLUE    ((uint8_t) 3u)
 
+#define IMU_EXPECTED_WHOAMI ((uint8_t) 0x6Au)
+
 void WS2812_Init(void);
 void WS2812_Write(uint8_t colors[16]);
 void WS2812_SetLed(uint8_t led, uint8_t color);
@@ -30,5 +32,9 @@ void test_enable_connections(void);
 void test_sensor_ports(void);
 void test_motor_ports(void);
 void test_imu(void);
+
+void imu_init(void);
+uint8_t imu_read_whoami(void);
+bool imu_run_selftest(void);
 
 #endif /* TEST_H_ */
