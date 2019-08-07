@@ -12,7 +12,6 @@
 #define TEST_H_
 
 #include "atmel_start_pins.h"
-#include <stdbool.h>
 #include <peripheral_clk_config.h>
 
 #define COLOR_OFF     ((uint8_t) 0u)
@@ -25,8 +24,9 @@ void WS2812_Write(uint8_t colors[16]);
 void WS2812_SetLed(uint8_t led, uint8_t color);
 
 void test_init(void);
-bool test_pullups(void);
-bool test_charger(void);
+void test_pullups(void);
+void test_charger(void);
+void test_enable_connections(void);
 void test_sensor_ports(void);
 void test_motor_ports(void);
 void test_imu(void);

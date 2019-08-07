@@ -8,15 +8,23 @@
 
 #include <hal_delay.h>
 
-void test_init(void)
-{
-    WS2812_Init();
-    
-    gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OUT);
-    gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OUT);
+#define TEST_PULLUP_LED   ((uint8_t) 0u)
+#define TEST_CHARGER_LED  ((uint8_t) 1u)
+#define TEST_S0_LED       ((uint8_t) 2u)
+#define TEST_S1_LED       ((uint8_t) 3u)
+#define TEST_S2_LED       ((uint8_t) 4u)
+#define TEST_S3_LED       ((uint8_t) 5u)
 
-    gpio_set_pin_level(TEST_ENABLE, false);
-    gpio_set_pin_level(TEST_CHARGER_EN, false);
+static void _indicate(uint8_t led, bool success)
+{
+    if (success)
+    {
+        WS2812_SetLed(led, COLOR_GREEN);
+    }
+    else
+    {
+        WS2812_SetLed(led, COLOR_RED);
+    }
 }
 
 static bool _test_pullup(uint32_t gpio)
@@ -32,18 +40,114 @@ static bool _test_pullup(uint32_t gpio)
     delay_ms(1);
     
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
-    delay_ms(1);
+    delay_ms(1u);
     success &= gpio_get_pin_level(gpio) == 1u;
 
     return success;
 }
 
-static bool _test_gpio(uint32_t driver, uint32_t sense)
+static float _read_analog(uint32_t adc, uint32_t ch)
 {
-    return false;
+    delay_ms(1u);
+    return 0.0f;
 }
 
-bool test_pullups(void)
+static bool _analog_expect_0v(uint32_t adc, uint32_t ch)
+{
+    float voltage = _read_analog(adc, ch);
+    
+    return -0.1f < voltage && voltage < 0.1f;
+}
+
+static bool _analog_expect_3v3(uint32_t adc, uint32_t ch)
+{
+    float voltage = _read_analog(adc, ch);
+    
+    return 3.2f < voltage && voltage < 3.4f;
+}
+
+static bool _analog_expect_5v(uint32_t adc, uint32_t ch)
+{
+    float voltage = _read_analog(adc, ch);
+    
+    return 4.9f < voltage && voltage < 5.1f;
+}
+
+static bool _test_gpio(uint32_t driver, uint32_t sense)
+{
+    bool success = true;
+
+    gpio_set_pin_direction(driver, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(sense, GPIO_DIRECTION_IN);
+    
+    gpio_set_pin_level(driver, true);
+    delay_ms(1u);
+    success &= gpio_get_pin_level(sense) == 1u;
+
+    gpio_set_pin_level(driver, false);
+    delay_ms(1u);
+    success &= gpio_get_pin_level(sense) == 0u;
+
+    gpio_set_pin_direction(driver, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(sense, GPIO_DIRECTION_OFF);
+
+    return success;
+}
+
+static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t adc_ch)
+{
+    bool success = true;
+
+    gpio_set_pin_direction(driver, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(iovcc, GPIO_DIRECTION_OUT);
+
+    /* test 3V3 */
+    gpio_set_pin_level(iovcc, false);
+
+    gpio_set_pin_level(driver, true);
+    success &= _analog_expect_3v3(adc, adc_ch);
+    
+    gpio_set_pin_level(driver, false);
+    success &= _analog_expect_0v(adc, adc_ch);
+
+    /* test 5V */
+    gpio_set_pin_level(iovcc, true);
+    
+    gpio_set_pin_level(driver, true);
+    success &= _analog_expect_5v(adc, adc_ch);
+    
+    gpio_set_pin_level(driver, false);
+    success &= _analog_expect_0v(adc, adc_ch);
+
+    /* reset to idle */
+    gpio_set_pin_level(iovcc, false);
+    gpio_set_pin_direction(driver, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(iovcc, GPIO_DIRECTION_OFF);
+
+    return success;
+}
+
+void test_init(void)
+{
+    WS2812_Init();
+    
+    gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OUT);
+
+    gpio_set_pin_level(TEST_ENABLE, false);
+    gpio_set_pin_level(TEST_CHARGER_EN, false);
+    
+    gpio_set_pin_direction(S0_IOVCC, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S1_IOVCC, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S2_IOVCC, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S3_IOVCC, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(S0_IOVCC, false);
+    gpio_set_pin_level(S1_IOVCC, false);
+    gpio_set_pin_level(S2_IOVCC, false);
+    gpio_set_pin_level(S3_IOVCC, false);
+}
+
+void test_pullups(void)
 {
     bool success = true;
     
@@ -101,11 +205,11 @@ bool test_pullups(void)
     /* internal pullups, skip */
     // success &= _test_pullup(CHARGER_STAT);
     // success &= _test_pullup(CHARGER_STBY);
-
-    return success;
+    
+    _indicate(TEST_PULLUP_LED, success);
 }
 
-bool test_charger(void)
+void test_charger(void)
 {
     /* configure pins */
     gpio_set_pin_direction(CHARGER_STAT, GPIO_DIRECTION_IN);
@@ -141,12 +245,49 @@ bool test_charger(void)
     gpio_set_pin_direction(CHARGER_STBY, GPIO_DIRECTION_OFF);
     gpio_set_pin_pull_mode(CHARGER_STBY, GPIO_PULL_OFF);
 
-    return success;
+    _indicate(TEST_CHARGER_LED, success);
+}
+
+void test_enable_connections(void)
+{
+    gpio_set_pin_level(TEST_ENABLE, true);
+    delay_ms(1u);
 }
 
 void test_sensor_ports(void)
 {
+    /* AIN pin is always connected to analog functions, no need to manually enable */
+    bool s0_result = true;
+    s0_result &= _test_gpio(S0_GPIO_IN, I2C0_SDApin);
+    s0_result &= _test_gpio(I2C0_SDApin, S0_GPIO_IN);
+    s0_result &= _test_gpio(S0_GPIO_OUT, I2C0_SCLpin);
+    s0_result &= _test_gpio(I2C0_SCLpin, S0_GPIO_OUT);
+    s0_result &= _test_analog(S0_GPIO_OUT, S0_IOVCC, S0_ADC_PER, S0_ADC_CH);
+    _indicate(TEST_S0_LED, s0_result);
 
+    bool s1_result = true;
+    s1_result &= _test_gpio(S1_GPIO_IN, I2C1_SDApin);
+    s1_result &= _test_gpio(I2C1_SDApin, S1_GPIO_IN);
+    s1_result &= _test_gpio(S1_GPIO_OUT, I2C1_SCLpin);
+    s1_result &= _test_gpio(I2C1_SCLpin, S1_GPIO_OUT);
+    s1_result &= _test_analog(S1_GPIO_OUT, S1_IOVCC, S1_ADC_PER, S1_ADC_CH);
+    _indicate(TEST_S1_LED, s1_result);
+    
+    bool s2_result = true;
+    s2_result &= _test_gpio(S2_GPIO_IN, I2C2_SDApin);
+    s2_result &= _test_gpio(I2C2_SDApin, S2_GPIO_IN);
+    s2_result &= _test_gpio(S2_GPIO_OUT, I2C2_SCLpin);
+    s2_result &= _test_gpio(I2C2_SCLpin, S2_GPIO_OUT);
+    s2_result &= _test_analog(S2_GPIO_OUT, S2_IOVCC, S2_ADC_PER, S2_ADC_CH);
+    _indicate(TEST_S2_LED, s2_result);
+    
+    bool s3_result = true;
+    s3_result &= _test_gpio(S3_GPIO_IN, I2C3_SDApin);
+    s3_result &= _test_gpio(I2C3_SDApin, S3_GPIO_IN);
+    s3_result &= _test_gpio(S3_GPIO_OUT, I2C3_SCLpin);
+    s3_result &= _test_gpio(I2C3_SCLpin, S3_GPIO_OUT);
+    s3_result &= _test_analog(S3_GPIO_OUT, S3_IOVCC, S3_ADC_PER, S3_ADC_CH);
+    _indicate(TEST_S3_LED, s3_result);
 }
 
 void test_motor_ports(void)
