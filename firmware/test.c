@@ -17,6 +17,12 @@
 #define TEST_S1_LED       ((uint8_t) 3u)
 #define TEST_S2_LED       ((uint8_t) 4u)
 #define TEST_S3_LED       ((uint8_t) 5u)
+#define TEST_M0_LED       ((uint8_t) 6u)
+#define TEST_M1_LED       ((uint8_t) 7u)
+#define TEST_M2_LED       ((uint8_t) 8u)
+#define TEST_M3_LED       ((uint8_t) 9u)
+#define TEST_M4_LED       ((uint8_t) 10u)
+#define TEST_M5_LED       ((uint8_t) 11u)
 
 static struct adc_sync_descriptor adcs[2];
 
@@ -75,25 +81,11 @@ static float _read_analog(uint32_t adc, uint32_t ch)
     return map(sum, 0, 4095, 0, 3300); /* Vref = VDDANA */
 }
 
-static bool _analog_expect_0v(uint32_t adc, uint32_t ch)
+static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
 {
     float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
     
-    return voltage < 0.1f;
-}
-
-static bool _analog_expect_3v3(uint32_t adc, uint32_t ch)
-{
-    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
-    
-    return 3.2f < voltage && voltage < 3.4f;
-}
-
-static bool _analog_expect_5v(uint32_t adc, uint32_t ch)
-{
-    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
-    
-    return 4.9f < voltage && voltage < 5.1f;
+    return lower < voltage && voltage < upper;
 }
 
 static bool _test_gpio(uint32_t driver, uint32_t sense)
@@ -128,24 +120,74 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
     gpio_set_pin_level(iovcc, false);
 
     gpio_set_pin_level(driver, true);
-    success &= _analog_expect_3v3(adc, adc_ch);
+    success &= _analog_expect(adc, adc_ch, 3.1f, 3.5f);
     
     gpio_set_pin_level(driver, false);
-    success &= _analog_expect_0v(adc, adc_ch);
+    success &= _analog_expect(adc, adc_ch, 0.0f, 0.2f);
 
     /* test 5V */
     gpio_set_pin_level(iovcc, true);
     
     gpio_set_pin_level(driver, true);
-    success &= _analog_expect_5v(adc, adc_ch);
+    success &= _analog_expect(adc, adc_ch, 4.2f, 5.2f);
     
     gpio_set_pin_level(driver, false);
-    success &= _analog_expect_0v(adc, adc_ch);
+    success &= _analog_expect(adc, adc_ch, 0.0f, 0.2f);
 
     /* reset to idle */
     gpio_set_pin_level(iovcc, false);
     gpio_set_pin_direction(driver, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(iovcc, GPIO_DIRECTION_OFF);
+
+    return success;
+}
+
+static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, uint32_t isen_adc, uint32_t isen_ch)
+{
+    struct test_case {
+        bool dr_en;
+        bool pwm_0;
+        bool pwm_1;
+        float current_min;
+        float current_max;
+    };
+    
+    static const struct test_case cases[] = {
+        { false, false, false, 0.0f, 0.1f},
+        { false, false, true,  0.0f, 0.1f},
+        { false, true,  false, 0.0f, 0.1f},
+        { false, true,  true,  0.0f, 0.1f},
+        
+        { true, false, true,  0.9f, 1.1f},
+        { true, false, false, 0.0f, 0.1f},
+        { true, true,  false, 0.9f, 1.1f},
+        { true, true,  true,  0.0f, 0.1f}
+    };
+
+    bool success = true;
+    
+    gpio_set_pin_direction(dr_en, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(pwm_0, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(pwm_1, GPIO_DIRECTION_OUT);
+    
+    for (uint8_t i = 0u; i < ARRAY_SIZE(cases); i++)
+    {
+        gpio_set_pin_level(dr_en, cases[i].dr_en);
+        gpio_set_pin_level(pwm_0, cases[i].pwm_0);
+        gpio_set_pin_level(pwm_1, cases[i].pwm_1);
+    
+        delay_ms(1u);
+
+        success &= _analog_expect(isen_adc, isen_ch, cases[i].current_min * 0.120f, cases[i].current_max * 0.120f); /* measured on 120mOhm resistor */
+    }
+
+    gpio_set_pin_level(dr_en, false);
+    gpio_set_pin_level(pwm_0, false);
+    gpio_set_pin_level(pwm_1, false);
+    
+    gpio_set_pin_direction(dr_en, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(pwm_0, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(pwm_1, GPIO_DIRECTION_OFF);
 
     return success;
 }
@@ -323,7 +365,53 @@ void test_sensor_ports(void)
 
 void test_motor_ports(void)
 {
-
+    //#define M0_DRIVER_IDX       1
+    //#define M0_DRIVER_CHANNEL   DRV8833_Channel_A
+    bool m0_result = true;
+    m0_result &= _test_gpio(ENCODER_DRIVER, M0_ENC_A);
+    m0_result &= _test_gpio(ENCODER_DRIVER, M0_ENC_B);
+    m0_result &= _test_motor_driver(MOTOR_DRIVER_1_EN, MOTOR_DRIVER_1_CH_A_PWM0_PIN, MOTOR_DRIVER_1_CH_A_PWM0_PIN, M0_ISEN_ADC, M0_ISEN_CH);
+    _indicate(TEST_M0_LED, m0_result);
+    
+    //#define M1_DRIVER_IDX       0
+    //#define M1_DRIVER_CHANNEL   DRV8833_Channel_A
+    bool m1_result = true;
+    m1_result &= _test_gpio(ENCODER_DRIVER, M1_ENC_A);
+    m1_result &= _test_gpio(ENCODER_DRIVER, M1_ENC_B);
+    m1_result &= _test_motor_driver(MOTOR_DRIVER_0_EN, MOTOR_DRIVER_0_CH_A_PWM0_PIN, MOTOR_DRIVER_0_CH_A_PWM0_PIN, M1_ISEN_ADC, M1_ISEN_CH);
+    _indicate(TEST_M1_LED, m1_result);
+    
+    //#define M2_DRIVER_IDX       0
+    //#define M2_DRIVER_CHANNEL   DRV8833_Channel_B
+    bool m2_result = true;
+    m2_result &= _test_gpio(ENCODER_DRIVER, M2_ENC_A);
+    m2_result &= _test_gpio(ENCODER_DRIVER, M2_ENC_B);
+    m2_result &= _test_motor_driver(MOTOR_DRIVER_0_EN, MOTOR_DRIVER_0_CH_B_PWM0_PIN, MOTOR_DRIVER_0_CH_B_PWM0_PIN, M2_ISEN_ADC, M2_ISEN_CH);
+    _indicate(TEST_M2_LED, m2_result);
+    
+    //#define M3_DRIVER_IDX       2
+    //#define M3_DRIVER_CHANNEL   DRV8833_Channel_A
+    bool m3_result = true;
+    m3_result &= _test_gpio(ENCODER_DRIVER, M3_ENC_A);
+    m3_result &= _test_gpio(ENCODER_DRIVER, M3_ENC_B);
+    m3_result &= _test_motor_driver(MOTOR_DRIVER_2_EN, MOTOR_DRIVER_2_CH_A_PWM0_PIN, MOTOR_DRIVER_2_CH_A_PWM0_PIN, M3_ISEN_ADC, M3_ISEN_CH);
+    _indicate(TEST_M3_LED, m3_result);
+    
+    //#define M4_DRIVER_IDX       2
+    //#define M4_DRIVER_CHANNEL   DRV8833_Channel_B
+    bool m4_result = true;
+    m4_result &= _test_gpio(ENCODER_DRIVER, M4_ENC_A);
+    m4_result &= _test_gpio(ENCODER_DRIVER, M4_ENC_B);
+    m4_result &= _test_motor_driver(MOTOR_DRIVER_2_EN, MOTOR_DRIVER_2_CH_B_PWM0_PIN, MOTOR_DRIVER_2_CH_B_PWM0_PIN, M4_ISEN_ADC, M4_ISEN_CH);
+    _indicate(TEST_M4_LED, m4_result);
+    
+    //#define M5_DRIVER_IDX       1
+    //#define M5_DRIVER_CHANNEL   DRV8833_Channel_B
+    bool m5_result = true;
+    m5_result &= _test_gpio(ENCODER_DRIVER, M5_ENC_A);
+    m5_result &= _test_gpio(ENCODER_DRIVER, M5_ENC_B);
+    m5_result &= _test_motor_driver(MOTOR_DRIVER_1_EN, MOTOR_DRIVER_1_CH_B_PWM0_PIN, MOTOR_DRIVER_1_CH_B_PWM0_PIN, M5_ISEN_ADC, M5_ISEN_CH);
+    _indicate(TEST_M5_LED, m5_result);
 }
 
 void test_imu(void)

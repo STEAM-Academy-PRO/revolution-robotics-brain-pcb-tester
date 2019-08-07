@@ -196,37 +196,43 @@
 
 /* Motor port 0 */
 #define M0_GREEN_LED        PB22
-#define M0_ISEN_AIN         PB04
+#define M0_ISEN_ADC         1
+#define M0_ISEN_CH          6
 #define M0_ENC_A            PB25
 #define M0_ENC_B            PB24
 
 /* Motor port 1 */
 #define M1_GREEN_LED        PC24
-#define M1_ISEN_AIN         PB03
+#define M1_ISEN_ADC         0
+#define M1_ISEN_CH          15
 #define M1_ENC_A            PB27
 #define M1_ENC_B            PA20
 
 /* Motor port 2 */
 #define M2_GREEN_LED        PC26
-#define M2_ISEN_AIN         PC00
+#define M2_ISEN_ADC         1
+#define M2_ISEN_CH          10
 #define M2_ENC_A            PA02
 #define M2_ENC_B            PA21
 
 /* Motor port 3 */
 #define M3_GREEN_LED        PC12
-#define M3_ISEN_AIN         PA11
+#define M3_ISEN_ADC         0
+#define M3_ISEN_CH          11
 #define M3_ENC_A            PB17
 #define M3_ENC_B            PB07
 
 /* Motor port 4 */
 #define M4_GREEN_LED        PD12
-#define M4_ISEN_AIN         PA10
+#define M4_ISEN_ADC         0
+#define M4_ISEN_CH          10
 #define M4_ENC_A            PB15
 #define M4_ENC_B            PC10
 
 /* Motor port 5 */
 #define M5_GREEN_LED        PC14
-#define M5_ISEN_AIN         PC02
+#define M5_ISEN_ADC         1
+#define M5_ISEN_CH          4
 #define M5_ENC_A            PB16
 #define M5_ENC_B            PB14
 
@@ -348,5 +354,6 @@
 #define TEST_CHARGER_EN PC18
 
 #define AMP_EN_sense    PC22
+#define ENCODER_DRIVER  PB18
 
 #endif // ATMEL_START_PINS_H_INCLUDED
