@@ -338,6 +338,8 @@
 #define IMU_SCLK_pin_function PINMUX_PB30D_SERCOM5_PAD1
 #define IMU_CS_pin            PB00
 #define IMU_CS_pin_function   GPIO_PIN_FUNCTION_OFF
+#define IMU_INT1_pin          PB26
+#define IMU_INT2_pin          PB28
 
 #define CHARGER_STBY        PC21
 #define CHARGER_STAT        PC23
