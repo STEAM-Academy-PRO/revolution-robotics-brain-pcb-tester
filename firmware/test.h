@@ -31,6 +31,7 @@ void test_charger(void);
 void test_enable_connections(void);
 void test_sensor_ports(void);
 void test_motor_ports(void);
+void test_supply_adc(void);
 void test_imu(void);
 
 void imu_init(void);

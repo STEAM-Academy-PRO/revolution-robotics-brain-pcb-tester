@@ -11,19 +11,22 @@
 
 #include "utils.h"
 
-#define TEST_PULLUP_LED   ((uint8_t) 0u)
-#define TEST_CHARGER_LED  ((uint8_t) 1u)
-#define TEST_S0_LED       ((uint8_t) 2u)
-#define TEST_S1_LED       ((uint8_t) 3u)
-#define TEST_S2_LED       ((uint8_t) 4u)
-#define TEST_S3_LED       ((uint8_t) 5u)
-#define TEST_M0_LED       ((uint8_t) 6u)
-#define TEST_M1_LED       ((uint8_t) 7u)
-#define TEST_M2_LED       ((uint8_t) 8u)
-#define TEST_M3_LED       ((uint8_t) 9u)
-#define TEST_M4_LED       ((uint8_t) 10u)
-#define TEST_M5_LED       ((uint8_t) 11u)
-#define TEST_IMU_LED      ((uint8_t) 12u)
+#define TEST_PULLUP_LED         ((uint8_t) 0u)
+#define TEST_CHARGER_LED        ((uint8_t) 1u)
+#define TEST_S0_LED             ((uint8_t) 2u)
+#define TEST_S1_LED             ((uint8_t) 3u)
+#define TEST_S2_LED             ((uint8_t) 4u)
+#define TEST_S3_LED             ((uint8_t) 5u)
+#define TEST_M0_LED             ((uint8_t) 6u)
+#define TEST_M1_LED             ((uint8_t) 7u)
+#define TEST_M2_LED             ((uint8_t) 8u)
+#define TEST_M3_LED             ((uint8_t) 9u)
+#define TEST_M4_LED             ((uint8_t) 10u)
+#define TEST_M5_LED             ((uint8_t) 11u)
+#define TEST_IMU_LED            ((uint8_t) 12u)
+#define TEST_BATTERY_ADC_LED    ((uint8_t) 13u)
+#define TEST_MOTOR_ADC_LED      ((uint8_t) 14u)
+#define TEST_TEST_DONE_LED      ((uint8_t) 15u)
 
 static struct adc_sync_descriptor adcs[2];
 
@@ -85,6 +88,13 @@ static float _read_analog(uint32_t adc, uint32_t ch)
 static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
 {
     float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
+    
+    return lower < voltage && voltage < upper;
+}
+
+static bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider)
+{
+    float voltage = _read_analog(adc, ch) / divider;
     
     return lower < voltage && voltage < upper;
 }
@@ -425,4 +435,18 @@ void test_imu(void)
     success &= imu_run_selftest();
     
     _indicate(TEST_IMU_LED, success);
+}
+
+void test_supply_adc(void)
+{
+    bool success;
+
+    /* TODO: these may be more strict */
+    success = _sysmon_analog_expect(1u, ADC_CH_BAT_VOLTAGE, 3000.0f, 4300.0f, 240.0f/340.0f );
+    _indicate(TEST_BATTERY_ADC_LED, success);
+    
+    success = _sysmon_analog_expect(1u, ADC_CH_MOT_VOLTAGE, 9000.0f, 11000.0f, 30.0f/130.0f );
+    _indicate(TEST_MOTOR_ADC_LED, success);
+
+    _indicate(TEST_TEST_DONE_LED, true);
 }
