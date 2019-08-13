@@ -7,6 +7,7 @@
 
 #include "test.h"
 #include <hal_spi_m_sync.h>
+#include <hal_delay.h>
 
 #define IMU_REGISTER_WHOAMI ((uint8_t) 0x0Fu)
 
@@ -94,7 +95,7 @@ static uint8_t _imu_read_register(uint8_t reg)
     xfer.rxbuf = rxBuffer;
     xfer.size = 2u;
     
-    gpio_set_pin_level(IMU_CS_pin, false);    
+    gpio_set_pin_level(IMU_CS_pin, false);
     spi_m_sync_transfer(&spi, &xfer);
     gpio_set_pin_level(IMU_CS_pin, true);
 
@@ -142,6 +143,10 @@ void imu_init(void)
 
     spi_m_sync_init(&spi, IMU_SERCOM);
     spi_m_sync_enable(&spi);
+    
+    /* disable i2c */
+    delay_ms(20u);
+    _imu_write_register(0x13u, 0x04u);
 }
 
 uint8_t imu_read_whoami(void)
@@ -174,13 +179,13 @@ static bool is_rot_interrupt_set(void)
 static void axl_set_positive_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x03u, 0x01u);
-    delay_ms(10u);
+    delay_ms(20u);
 }
 
 static void axl_set_negative_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x03u, 0x02u);
-    delay_ms(10u);
+    delay_ms(20u);
 }
 
 static void axl_clear_test_signal(void)
@@ -191,13 +196,13 @@ static void axl_clear_test_signal(void)
 static void rot_set_positive_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x0Cu, 0x04u);
-    delay_ms(10u);
+    delay_ms(20u);
 }
 
 static void rot_set_negative_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x0Cu, 0x0Cu);
-    delay_ms(10u);
+    delay_ms(20u);
 }
 
 static void rot_clear_test_signal(void)
@@ -231,9 +236,12 @@ void read_averaged_axl_sample(imu_axl_t* data)
     int32_t y = 0;
     int32_t z = 0;
 
+    /* discard first */
+    imu_axl_t axl;
+    read_axl_sample(&axl);
+
     for (uint8_t i = 0u; i < 8u; i++)
     {
-        imu_axl_t axl;
         read_axl_sample(&axl);
         
         x += axl.x;
@@ -272,9 +280,12 @@ void read_averaged_rot_sample(imu_rot_t* data)
     int32_t y = 0;
     int32_t z = 0;
 
+    /* discard first */
+    imu_rot_t rot;
+    read_rot_sample(&rot);
+
     for (uint8_t i = 0u; i < 8u; i++)
     {
-        imu_rot_t rot;
         read_rot_sample(&rot);
         
         x += rot.x;
@@ -298,7 +309,7 @@ bool imu_run_selftest(void)
 
     /* reset device */
     _imu_write_register(0x12u, 0x01u);
-    delay_ms(10u);
+    delay_ms(20u);
 
     /* disable i2c */
     _imu_write_register(0x13u, 0x04u);
@@ -320,7 +331,6 @@ bool imu_run_selftest(void)
 
     /* read idle acceleration & rotation */
     read_averaged_axl_sample(&idle_acceleration);
-    read_averaged_rot_sample(&idle_rotation);
 
     bool success = true;
 
@@ -343,17 +353,24 @@ bool imu_run_selftest(void)
     axl_clear_test_signal();
 
     /* An angular rate gyroscope is a device that produces a positive-going digital output for counterclockwise rotation around the axis considered [datasheet 4.6.1] */
-    
+    delay_ms(20u);
+
+    read_averaged_rot_sample(&idle_rotation);
+
     /* test signal is around 20..80dps */
     /* set positive test signal on rotation */
     rot_set_positive_test_signal();
     read_averaged_rot_sample(&active_rotation);
     success &= (active_rotation.x - idle_rotation.x) > 200; /* 1LSb = 70 mdps at ±2000 dps full scale */
+    success &= (active_rotation.y - idle_rotation.y) > 200;
+    success &= (active_rotation.z - idle_rotation.z) > 200;
     
     /* set negative test signal on rotation */
     rot_set_negative_test_signal();
     read_averaged_rot_sample(&active_rotation);
     success &= (active_rotation.x - idle_rotation.x) < -200; /* 1LSb = 70 mdps at ±2000 dps full scale */
+    success &= (active_rotation.y - idle_rotation.y) < -200;
+    success &= (active_rotation.z - idle_rotation.z) < -200;
 
     rot_clear_test_signal();
 

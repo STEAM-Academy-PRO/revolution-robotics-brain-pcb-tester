@@ -232,6 +232,8 @@ void test_init(void)
     
     adc_sync_enable_channel(&adcs[0], 0u);
     adc_sync_enable_channel(&adcs[1], 0u);
+
+    imu_init();
 }
 
 void test_pullups(void)
@@ -430,8 +432,6 @@ void test_motor_ports(void)
 
 void test_imu(void)
 {
-    imu_init();
-
     bool success = true;
     
     success &= imu_read_whoami() == IMU_EXPECTED_WHOAMI;
