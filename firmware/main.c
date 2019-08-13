@@ -17,9 +17,9 @@ int main(void)
     test_sensor_ports();
     test_motor_ports();
 
-    test_supply_adc();
-
     test_imu();
+
+    test_supply_adc();
 
     while (1)
     {

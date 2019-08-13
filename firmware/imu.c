@@ -174,11 +174,13 @@ static bool is_rot_interrupt_set(void)
 static void axl_set_positive_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x03u, 0x01u);
+    delay_ms(10u);
 }
 
 static void axl_set_negative_test_signal(void)
 {
     _imu_modify_register(0x14u, 0x03u, 0x02u);
+    delay_ms(10u);
 }
 
 static void axl_clear_test_signal(void)
@@ -188,12 +190,14 @@ static void axl_clear_test_signal(void)
 
 static void rot_set_positive_test_signal(void)
 {
-    _imu_modify_register(0x14u, 0x0Cu, 0x01u);
+    _imu_modify_register(0x14u, 0x0Cu, 0x04u);
+    delay_ms(10u);
 }
 
 static void rot_set_negative_test_signal(void)
 {
-    _imu_modify_register(0x14u, 0x0Cu, 0x03u);
+    _imu_modify_register(0x14u, 0x0Cu, 0x0Cu);
+    delay_ms(10u);
 }
 
 static void rot_clear_test_signal(void)
@@ -283,10 +287,19 @@ void read_averaged_rot_sample(imu_rot_t* data)
     data->z = z >> 3u;
 }
 
+    imu_axl_t idle_acceleration;
+    imu_axl_t active_acceleration;
+    imu_rot_t idle_rotation;
+    imu_rot_t active_rotation;
+
 bool imu_run_selftest(void)
 {
     /* common configuration */
-    
+
+    /* reset device */
+    _imu_write_register(0x12u, 0x01u);
+    delay_ms(10u);
+
     /* disable i2c */
     _imu_write_register(0x13u, 0x04u);
 
@@ -301,28 +314,31 @@ bool imu_run_selftest(void)
     
     _imu_write_register(0x10u, 0x60u); /**< axl 416Hz, +/-2g, LPF1=0 */
     _imu_write_register(0x11u, 0x60u); /**< gyro 416Hz, +/-245dps */
+    
+    _imu_write_register(0x16u, 0x00u); /**< gyro HPF off */
+    _imu_write_register(0x17u, 0x00u); /**< axl LPF off */
 
     /* read idle acceleration & rotation */
-    imu_axl_t idle_acceleration;
-    imu_axl_t active_acceleration;
     read_averaged_axl_sample(&idle_acceleration);
-    
-    imu_rot_t idle_rotation;
-    imu_rot_t active_rotation;
     read_averaged_rot_sample(&idle_rotation);
 
     bool success = true;
+
     /* test signal is somewhere between 90..1700mg of acceleration */
     
     /* set positive test signal on acceleration */
     axl_set_positive_test_signal();
     read_averaged_axl_sample(&active_acceleration);
     success &= (active_acceleration.x - idle_acceleration.x) > 1500; /* 1LSb = 0.061 mg at ±2 g full scale */
+    success &= (active_acceleration.y - idle_acceleration.y) > 1500;
+    success &= (active_acceleration.z - idle_acceleration.z) > 1500;
 
     /* set negative test signal on acceleration */
     axl_set_negative_test_signal();
     read_averaged_axl_sample(&active_acceleration);
     success &= (active_acceleration.x - idle_acceleration.x) < -1500; /* 1LSb = 0.061 mg at ±2 g full scale */
+    success &= (active_acceleration.y - idle_acceleration.y) < -1500;
+    success &= (active_acceleration.z - idle_acceleration.z) < -1500;
 
     axl_clear_test_signal();
 

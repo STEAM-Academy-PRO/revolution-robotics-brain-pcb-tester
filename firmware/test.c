@@ -229,6 +229,9 @@ void test_init(void)
 
     adc_sync_init(&adcs[0], ADC0);
     adc_sync_init(&adcs[1], ADC1);
+    
+    adc_sync_enable_channel(&adcs[0], 0u);
+    adc_sync_enable_channel(&adcs[1], 0u);
 }
 
 void test_pullups(void)
