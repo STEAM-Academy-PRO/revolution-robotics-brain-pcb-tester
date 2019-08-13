@@ -74,7 +74,7 @@ static float _read_analog(uint32_t adc, uint32_t ch)
     uint16_t buffer[8];
     delay_ms(1u);
     adc_sync_set_inputs(&adcs[adc], ch, ADC_CHN_INT_GND, 0u);
-    adc_sync_read_channel(&adcs[adc], 0u, (uint8_t*) buffer, ARRAY_SIZE(buffer));
+    adc_sync_read_channel(&adcs[adc], 0u, (uint8_t*) buffer, sizeof(buffer));
     uint16_t sum = 0u;
     for (uint8_t i = 0u; i < ARRAY_SIZE(buffer); i++)
     {
