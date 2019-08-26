@@ -8,6 +8,7 @@ int main(void)
     system_init();
 
     test_init();
+    test_leds();
 
     test_pullups();
     test_charger();

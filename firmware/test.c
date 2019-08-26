@@ -236,6 +236,30 @@ void test_init(void)
     imu_init();
 }
 
+void test_leds(void)
+{
+    for (uint8_t led = 0u; led < 16u; led++)
+    {
+        WS2812_SetLed(led, COLOR_GREEN);
+    }
+
+    delay_ms(1000u);
+
+    for (uint8_t led = 0u; led < 16u; led++)
+    {
+        WS2812_SetLed(led, COLOR_RED);
+    }
+    
+    delay_ms(1000u);
+
+    for (uint8_t led = 0u; led < 16u; led++)
+    {
+        WS2812_SetLed(led, COLOR_BLUE);
+    }
+
+    delay_ms(1000u);
+}
+
 void test_pullups(void)
 {
     bool success = true;

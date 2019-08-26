@@ -26,6 +26,7 @@ void WS2812_Write(uint8_t colors[16]);
 void WS2812_SetLed(uint8_t led, uint8_t color);
 
 void test_init(void);
+void test_leds(void);
 void test_pullups(void);
 void test_charger(void);
 void test_enable_connections(void);
