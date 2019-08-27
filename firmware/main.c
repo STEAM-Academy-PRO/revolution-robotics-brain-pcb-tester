@@ -22,6 +22,8 @@ int main(void)
 
     test_supply_adc();
 
+    test_sound();
+
     while (1)
     {
     }

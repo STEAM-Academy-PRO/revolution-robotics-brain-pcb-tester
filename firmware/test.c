@@ -474,6 +474,26 @@ void test_supply_adc(void)
     
     success = _sysmon_analog_expect(1u, ADC_CH_MOT_VOLTAGE, 9000.0f, 11000.0f, 30.0f/130.0f );
     _indicate(TEST_MOTOR_ADC_LED, success);
+}
+
+void test_sound(void)
+{
+    gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OUT);
+
+    /* enable amplifier */
+    gpio_set_pin_level(AMP_EN_sense, false);
+    delay_ms(10u);
+    for (uint32_t i = 0u; i < 3000u; i++)
+    {
+        gpio_toggle_pin_level(SOUND_TEST_PWM);
+        delay_us(500u);
+    }
+    gpio_set_pin_level(AMP_EN_sense, true);
+    /* disable amplifier */
 
     _indicate(TEST_TEST_DONE_LED, true);
+    
+    gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OFF);
 }
