@@ -458,7 +458,21 @@ void test_imu(void)
 {
     bool success = true;
     
-    success &= imu_read_whoami() == IMU_EXPECTED_WHOAMI;
+    uint8_t whoami = imu_read_whoami();
+
+    uint8_t accepted_whoami[] = { 0x6Au, 0x69u };
+
+    bool whoami_ok = false;
+    for (uint8_t i = 0u; i < ARRAY_SIZE(accepted_whoami); i++)
+    {
+        if (accepted_whoami[i] == whoami)
+        {
+            whoami_ok = true;
+            break;
+        }
+    }
+
+    success &= whoami_ok;
     success &= imu_run_selftest();
     
     _indicate(TEST_IMU_LED, success);
@@ -481,12 +495,16 @@ void test_sound(void)
     gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OUT);
 
+    _indicate(TEST_TEST_DONE_LED, false);
+
     /* enable amplifier */
     gpio_set_pin_level(AMP_EN_sense, false);
     delay_ms(10u);
     for (uint32_t i = 0u; i < 3000u; i++)
     {
-        gpio_toggle_pin_level(SOUND_TEST_PWM);
+        gpio_set_pin_level(SOUND_TEST_PWM, true);
+        delay_us(500u);
+        gpio_set_pin_level(SOUND_TEST_PWM, false);
         delay_us(500u);
     }
     gpio_set_pin_level(AMP_EN_sense, true);
@@ -496,4 +514,10 @@ void test_sound(void)
     
     gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OFF);
+    
+    gpio_set_pin_level(TEST_ENABLE, false);
+    gpio_set_pin_level(TEST_CHARGER_EN, false);
+    
+    gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OFF);
 }
