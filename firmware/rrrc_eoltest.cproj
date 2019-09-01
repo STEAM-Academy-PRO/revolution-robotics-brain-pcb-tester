@@ -233,7 +233,7 @@
       </AcmeProjectConfig>
     </AcmeProjectConfig>
     <avrtool>com.atmel.avrdbg.tool.samice</avrtool>
-    <avrtoolserialnumber>260113020</avrtoolserialnumber>
+    <avrtoolserialnumber>801012109</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x60060301</avrdeviceexpectedsignature>
     <avrtoolinterface>SWD</avrtoolinterface>
     <com_atmel_avrdbg_tool_atmelice>
@@ -256,7 +256,7 @@
         <InterfaceName>SWD</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.samice</ToolType>
-      <ToolNumber>260113020</ToolNumber>
+      <ToolNumber>801012109</ToolNumber>
       <ToolName>J-Link</ToolName>
     </com_atmel_avrdbg_tool_samice>
     <com_atmel_avrdbg_tool_edbg>
@@ -409,6 +409,7 @@
     <ListValues>
       <Value>DEBUG</Value>
       <Value>COMPATIBLE_HW_VERSIONS=2</Value>
+      <Value>ARM_MATH_CM4</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
@@ -919,6 +920,12 @@
     <Compile Include="hpl\systick\hpl_systick.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="hpl\tcc\tcc_lite.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hpl\tcc\tcc_lite.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="hpl\tc\hpl_tc.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1088,6 +1095,7 @@
     <Folder Include="hpl\gclk\" />
     <Folder Include="hpl\mclk\" />
     <Folder Include="hpl\evsys" />
+    <Folder Include="hpl\tcc" />
     <Folder Include="hpl\nvmctrl" />
     <Folder Include="hpl\osc32kctrl\" />
     <Folder Include="hpl\oscctrl\" />

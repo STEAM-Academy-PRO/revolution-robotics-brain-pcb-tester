@@ -70,21 +70,21 @@ static void _set_led(uint8_t led, uint8_t color)
             break;
 
         case COLOR_RED:
-            r = 24u;
+            r = 12u;
             g = 0u;
             b = 0u;
             break;
 
         case COLOR_GREEN:
             r = 0u;
-            g = 24u;
+            g = 12u;
             b = 0u;
             break;
 
         case COLOR_BLUE:
             r = 0u;
-            g = 8u;
-            b = 16u;
+            g = 4u;
+            b = 8u;
             break;
     }
 

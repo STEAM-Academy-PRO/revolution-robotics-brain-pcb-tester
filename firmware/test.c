@@ -8,7 +8,9 @@
 
 #include <hal_delay.h>
 #include <hal_adc_sync.h>
+#include <tcc_lite.h>
 
+#include <arm_math.h>
 #include "utils.h"
 
 #define TEST_PULLUP_LED         ((uint8_t) 0u)
@@ -336,13 +338,15 @@ void test_charger(void)
     /* execute test */
     gpio_set_pin_level(TEST_CHARGER_EN, false);
 
+    delay_ms(200u);
+
     bool success = true;
     success &= gpio_get_pin_level(CHARGER_STAT) == 1u;
     success &= gpio_get_pin_level(CHARGER_STBY) == 1u;
     
     gpio_set_pin_level(TEST_CHARGER_EN, true);
-
-    delay_ms(1u);
+    
+    delay_ms(2u);
 
     bool pin_changed;
     pin_changed = gpio_get_pin_level(CHARGER_STAT) == 0u;
@@ -353,8 +357,8 @@ void test_charger(void)
     /* reset pins */
     gpio_set_pin_level(TEST_CHARGER_EN, false);
 
-    gpio_set_pin_direction(CHARGER_STBY, GPIO_DIRECTION_OFF);
-    gpio_set_pin_pull_mode(CHARGER_STBY, GPIO_PULL_OFF);
+    gpio_set_pin_direction(CHARGER_STAT, GPIO_DIRECTION_OFF);
+    gpio_set_pin_pull_mode(CHARGER_STAT, GPIO_PULL_OFF);
     gpio_set_pin_direction(CHARGER_STBY, GPIO_DIRECTION_OFF);
     gpio_set_pin_pull_mode(CHARGER_STBY, GPIO_PULL_OFF);
 
@@ -492,23 +496,43 @@ void test_supply_adc(void)
 
 void test_sound(void)
 {
+    hri_mclk_set_APBBMASK_TCC1_bit(MCLK);
+    hri_gclk_write_PCHCTRL_reg(GCLK, TCC1_GCLK_ID, CONF_GCLK_TCC1_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+    
     gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OUT);
-
-    _indicate(TEST_TEST_DONE_LED, false);
-
+    gpio_set_pin_drive(SOUND_TEST_PWM, GPIO_DRIVE_STRONG);
+    gpio_set_pin_function(SOUND_TEST_PWM, PINMUX_PD20F_TCC1_WO0);
+    
+    PWM_0_init();
+    
     /* enable amplifier */
     gpio_set_pin_level(AMP_EN_sense, false);
-    delay_ms(10u);
-    for (uint32_t i = 0u; i < 3000u; i++)
+    delay_ms(100u);
+
+    /* about 1s */
+    hri_tcc_set_CTRLA_CPTEN0_bit(TCC1);
+    hri_tcc_write_CTRLA_ENABLE_bit(TCC1, 1 << TCC_CTRLA_ENABLE_Pos); /* Enable: enabled */
+
+    uint16_t sin_vals[1000];
+    for (uint32_t i = 0u; i < 1000u; i++)
     {
-        gpio_set_pin_level(SOUND_TEST_PWM, true);
-        delay_us(500u);
-        gpio_set_pin_level(SOUND_TEST_PWM, false);
-        delay_us(500u);
+        float f = sin(2.0f * M_PI * i / 1000.0f); /* 1kHz sine wave -1 .. 1 */
+        float scaled = ((f + 1.0f) / 2.0f) * 1000.0f; /* -1 -> 0; 1-> PER */
+
+        sin_vals[i] = lroundf(scaled);
     }
-    gpio_set_pin_level(AMP_EN_sense, true);
+
+    for (uint32_t i = 0u; i < 1u * 1000000u; i++)
+    {
+        hri_tcc_wait_for_sync(TCC1, TCC_SYNCBUSY_MASK);
+        hri_tcc_write_CCBUF_reg(TCC1, 0u, sin_vals[i % 1000]);
+    }
+
+    hri_tcc_clear_CTRLA_ENABLE_bit(TCC1);
+
     /* disable amplifier */
+    gpio_set_pin_level(AMP_EN_sense, true);
 
     _indicate(TEST_TEST_DONE_LED, true);
     

@@ -955,7 +955,7 @@
 
 // <i> Select the clock source for TCC.
 #ifndef CONF_GCLK_TCC1_SRC
-#define CONF_GCLK_TCC1_SRC GCLK_PCHCTRL_GEN_GCLK1_Val
+#define CONF_GCLK_TCC1_SRC GCLK_PCHCTRL_GEN_GCLK0_Val
 #endif
 
 /**
@@ -963,7 +963,7 @@
  * \brief TCC1's Clock frequency
  */
 #ifndef CONF_GCLK_TCC1_FREQUENCY
-#define CONF_GCLK_TCC1_FREQUENCY 23999692
+#define CONF_GCLK_TCC1_FREQUENCY 119990272
 #endif
 
 

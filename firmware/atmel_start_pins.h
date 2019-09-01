@@ -355,7 +355,7 @@
 #define TEST_ENABLE     PD21
 #define TEST_CHARGER_EN PC18
 
-#define SOUND_TEST_PWM  PC22
+#define SOUND_TEST_PWM  PD20
 #define AMP_EN_sense    PC22
 #define ENCODER_DRIVER  PB18
 
