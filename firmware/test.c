@@ -73,16 +73,33 @@ static bool _test_pullup(uint32_t gpio)
 
 static float _read_analog(uint32_t adc, uint32_t ch)
 {
-    uint16_t buffer[8];
+    #define SKIPPED_EXTREMES (3u)
+    uint16_t buffer[16];
     delay_ms(1u);
     adc_sync_set_inputs(&adcs[adc], ch, ADC_CHN_INT_GND, 0u);
     adc_sync_read_channel(&adcs[adc], 0u, (uint8_t*) buffer, sizeof(buffer));
+
+    /* sort the buffer so the n smallest and greatest values can be ignored */
+    for (uint32_t i = 0u; i < ARRAY_SIZE(buffer) - 1u; i++)
+    {
+        for (uint32_t j = i; j < ARRAY_SIZE(buffer); j++)
+        {
+            if (buffer[i] > buffer[j])
+            {
+                uint16_t temp = buffer[i];
+                buffer[i] = buffer[j];
+                buffer[j] = temp;
+            }
+        }
+    }
+
+    /* average the values that are not ignored */
     uint16_t sum = 0u;
-    for (uint8_t i = 0u; i < ARRAY_SIZE(buffer); i++)
+    for (uint32_t i = SKIPPED_EXTREMES; i < ARRAY_SIZE(buffer) - SKIPPED_EXTREMES; i++)
     {
         sum += buffer[i];
     }
-    sum = sum / ARRAY_SIZE(buffer);
+    sum = sum / (ARRAY_SIZE(buffer) - 2 * SKIPPED_EXTREMES);
 
     return map(sum, 0, 4095, 0, 3300); /* Vref = VDDANA */
 }
@@ -178,6 +195,12 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
     };
 
     bool success = true;
+
+    float motor_voltage = _read_analog(1u, ADC_CH_MOT_VOLTAGE) * 130.0f / 30.0f;
+    float dummy_resistance = 10.0f;
+    float current_measure_resistance = 0.120f;
+    float nominal_current = motor_voltage / dummy_resistance;
+    float measured_voltage = current_measure_resistance * nominal_current;
     
     gpio_set_pin_direction(dr_en, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(pwm_0, GPIO_DIRECTION_OUT);
@@ -191,7 +214,7 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
     
         delay_ms(1u);
 
-        success &= _analog_expect(isen_adc, isen_ch, cases[i].current_min * 0.120f, cases[i].current_max * 0.120f); /* measured on 120mOhm resistor */
+        success &= _analog_expect(isen_adc, isen_ch, cases[i].current_min * measured_voltage, cases[i].current_max * measured_voltage); /* measured on 120mOhm resistor */
     }
 
     gpio_set_pin_level(dr_en, false);
@@ -490,7 +513,7 @@ void test_supply_adc(void)
     success = _sysmon_analog_expect(1u, ADC_CH_BAT_VOLTAGE, 3000.0f, 4300.0f, 240.0f/340.0f );
     _indicate(TEST_BATTERY_ADC_LED, success);
     
-    success = _sysmon_analog_expect(1u, ADC_CH_MOT_VOLTAGE, 9000.0f, 11000.0f, 30.0f/130.0f );
+    success = _sysmon_analog_expect(1u, ADC_CH_MOT_VOLTAGE, 4000.0f, 11000.0f, 30.0f/130.0f );
     _indicate(TEST_MOTOR_ADC_LED, success);
 }
 
