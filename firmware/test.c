@@ -127,11 +127,17 @@ static bool _test_gpio(uint32_t driver, uint32_t sense)
     
     gpio_set_pin_level(driver, true);
     delay_ms(1u);
-    success &= gpio_get_pin_level(sense) == 1u;
+    if (gpio_get_pin_level(sense) != 1u)
+    {
+        success = false;
+    }
 
     gpio_set_pin_level(driver, false);
     delay_ms(1u);
-    success &= gpio_get_pin_level(sense) == 0u;
+    if (gpio_get_pin_level(sense) != 0u)
+    {
+        success = false;
+    }
 
     gpio_set_pin_direction(driver, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(sense, GPIO_DIRECTION_OFF);
@@ -150,19 +156,31 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
     gpio_set_pin_level(iovcc, false);
 
     gpio_set_pin_level(driver, true);
-    success &= _analog_expect(adc, adc_ch, 3.1f, 3.5f);
+    if (!_analog_expect(adc, adc_ch, 3.1f, 3.5f))
+    {
+        success = false;
+    }
     
     gpio_set_pin_level(driver, false);
-    success &= _analog_expect(adc, adc_ch, 0.0f, 0.2f);
+    if (!_analog_expect(adc, adc_ch, 0.0f, 0.2f))
+    {
+        success = false;
+    }
 
     /* test 5V */
     gpio_set_pin_level(iovcc, true);
     
     gpio_set_pin_level(driver, true);
-    success &= _analog_expect(adc, adc_ch, 4.2f, 5.2f);
+    if (!_analog_expect(adc, adc_ch, 4.2f, 5.2f))
+    {
+        success = false;
+    }
     
     gpio_set_pin_level(driver, false);
-    success &= _analog_expect(adc, adc_ch, 0.0f, 0.2f);
+    if (!_analog_expect(adc, adc_ch, 0.0f, 0.2f))
+    {
+        success = false;
+    }
 
     /* reset to idle */
     gpio_set_pin_level(iovcc, false);
@@ -214,7 +232,10 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
     
         delay_ms(1u);
 
-        success &= _analog_expect(isen_adc, isen_ch, cases[i].current_min * measured_voltage, cases[i].current_max * measured_voltage); /* measured on 120mOhm resistor */
+        if (!_analog_expect(isen_adc, isen_ch, cases[i].current_min * measured_voltage, cases[i].current_max * measured_voltage)) /* measured on 120mOhm resistor */
+        {
+            success = false;
+        }
     }
 
     gpio_set_pin_level(dr_en, false);
@@ -364,8 +385,15 @@ void test_charger(void)
     delay_ms(200u);
 
     bool success = true;
-    success &= gpio_get_pin_level(CHARGER_STAT) == 1u;
-    success &= gpio_get_pin_level(CHARGER_STBY) == 1u;
+    if (gpio_get_pin_level(CHARGER_STAT) != 1u;)
+    {
+        success = false;
+    }
+
+    if (gpio_get_pin_level(CHARGER_STBY) != 1u)
+    {
+        success = false;
+    }
     
     gpio_set_pin_level(TEST_CHARGER_EN, true);
     
@@ -375,7 +403,10 @@ void test_charger(void)
     pin_changed = gpio_get_pin_level(CHARGER_STAT) == 0u;
     pin_changed |= gpio_get_pin_level(CHARGER_STBY) == 0u;
 
-    success &= pin_changed;
+    if (!pin_changed)
+    {
+        success = false;
+    }
 
     /* reset pins */
     gpio_set_pin_level(TEST_CHARGER_EN, false);
@@ -398,35 +429,111 @@ void test_sensor_ports(void)
 {
     /* AIN pin is always connected to analog functions, no need to manually enable */
     bool s0_result = true;
-    s0_result &= _test_gpio(S0_GPIO_IN, I2C0_SDApin);
-    s0_result &= _test_gpio(I2C0_SDApin, S0_GPIO_IN);
-    s0_result &= _test_gpio(S0_GPIO_OUT, I2C0_SCLpin);
-    s0_result &= _test_gpio(I2C0_SCLpin, S0_GPIO_OUT);
-    s0_result &= _test_analog(S0_GPIO_OUT, S0_IOVCC, S0_ADC_PER, S0_ADC_CH);
+    if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
+    {
+        s0_result = false;
+    }
+    if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
+    {
+        s0_result = false;
+    }
+    if (!_test_gpio(I2C0_SDApin, S0_GPIO_IN))
+    {
+        s0_result = false;
+    }
+    if (!_test_gpio(S0_GPIO_OUT, I2C0_SCLpin))
+    {
+        s0_result = false;
+    }
+    if (!_test_gpio(I2C0_SCLpin, S0_GPIO_OUT))
+    {
+        s0_result = false;
+    }
+    if (!_test_analog(S0_GPIO_OUT, S0_IOVCC, S0_ADC_PER, S0_ADC_CH))
+    {
+        s0_result = false;
+    }
     _indicate(TEST_S0_LED, s0_result);
 
     bool s1_result = true;
-    s1_result &= _test_gpio(S1_GPIO_IN, I2C1_SDApin);
-    s1_result &= _test_gpio(I2C1_SDApin, S1_GPIO_IN);
-    s1_result &= _test_gpio(S1_GPIO_OUT, I2C1_SCLpin);
-    s1_result &= _test_gpio(I2C1_SCLpin, S1_GPIO_OUT);
-    s1_result &= _test_analog(S1_GPIO_OUT, S1_IOVCC, S1_ADC_PER, S1_ADC_CH);
+    if (!_test_gpio(S1_GPIO_IN, I2C1_SDApin))
+    {
+        s1_result = false;
+    }
+    if (!_test_gpio(S1_GPIO_IN, I2C1_SDApin))
+    {
+        s1_result = false;
+    }
+    if (!_test_gpio(I2C1_SDApin, S1_GPIO_IN))
+    {
+        s1_result = false;
+    }
+    if (!_test_gpio(S1_GPIO_OUT, I2C1_SCLpin))
+    {
+        s1_result = false;
+    }
+    if (!_test_gpio(I2C1_SCLpin, S1_GPIO_OUT))
+    {
+        s1_result = false;
+    }
+    if (!_test_analog(S1_GPIO_OUT, S1_IOVCC, S1_ADC_PER, S1_ADC_CH))
+    {
+        s1_result = false;
+    }
     _indicate(TEST_S1_LED, s1_result);
-    
+
     bool s2_result = true;
-    s2_result &= _test_gpio(S2_GPIO_IN, I2C2_SDApin);
-    s2_result &= _test_gpio(I2C2_SDApin, S2_GPIO_IN);
-    s2_result &= _test_gpio(S2_GPIO_OUT, I2C2_SCLpin);
-    s2_result &= _test_gpio(I2C2_SCLpin, S2_GPIO_OUT);
-    s2_result &= _test_analog(S2_GPIO_OUT, S2_IOVCC, S2_ADC_PER, S2_ADC_CH);
+    if (!_test_gpio(S2_GPIO_IN, I2C2_SDApin))
+    {
+        s2_result = false;
+    }
+    if (!_test_gpio(S2_GPIO_IN, I2C2_SDApin))
+    {
+        s2_result = false;
+    }
+    if (!_test_gpio(I2C2_SDApin, S2_GPIO_IN))
+    {
+        s2_result = false;
+    }
+    if (!_test_gpio(S2_GPIO_OUT, I2C2_SCLpin))
+    {
+        s2_result = false;
+    }
+    if (!_test_gpio(I2C2_SCLpin, S2_GPIO_OUT))
+    {
+        s2_result = false;
+    }
+    if (!_test_analog(S2_GPIO_OUT, S2_IOVCC, S2_ADC_PER, S2_ADC_CH))
+    {
+        s2_result = false;
+    }
     _indicate(TEST_S2_LED, s2_result);
-    
+
     bool s3_result = true;
-    s3_result &= _test_gpio(S3_GPIO_IN, I2C3_SDApin);
-    s3_result &= _test_gpio(I2C3_SDApin, S3_GPIO_IN);
-    s3_result &= _test_gpio(S3_GPIO_OUT, I2C3_SCLpin);
-    s3_result &= _test_gpio(I2C3_SCLpin, S3_GPIO_OUT);
-    s3_result &= _test_analog(S3_GPIO_OUT, S3_IOVCC, S3_ADC_PER, S3_ADC_CH);
+    if (!_test_gpio(S3_GPIO_IN, I2C3_SDApin))
+    {
+        s3_result = false;
+    }
+    if (!_test_gpio(S3_GPIO_IN, I2C3_SDApin))
+    {
+        s3_result = false;
+    }
+    if (!_test_gpio(I2C3_SDApin, S3_GPIO_IN))
+    {
+        s3_result = false;
+    }
+    if (!_test_gpio(S3_GPIO_OUT, I2C3_SCLpin))
+    {
+        s3_result = false;
+    }
+    if (!_test_gpio(I2C3_SCLpin, S3_GPIO_OUT))
+    {
+        s3_result = false;
+    }
+    if (!_test_analog(S3_GPIO_OUT, S3_IOVCC, S3_ADC_PER, S3_ADC_CH))
+    {
+        s3_result = false;
+    }
     _indicate(TEST_S3_LED, s3_result);
 }
 
@@ -499,8 +606,14 @@ void test_imu(void)
         }
     }
 
-    success &= whoami_ok;
-    success &= imu_run_selftest();
+    if (!whoami_ok)
+    {
+        success = false;
+    }
+    if (!imu_run_selftest())
+    {
+        success = false;
+    }
     
     _indicate(TEST_IMU_LED, success);
 }
