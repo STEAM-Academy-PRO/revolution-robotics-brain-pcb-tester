@@ -1,16 +1,10 @@
-/*
- * test.c
- *
- * Created: 2019. 08. 06. 14:53:49
- *  Author: bugad
- */ 
 #include "test.h"
 
 #include <hal_delay.h>
 #include <hal_adc_sync.h>
 #include <tcc_lite.h>
 
-#include <arm_math.h>
+#include <math.h>
 #include "utils.h"
 
 #define TEST_PULLUP_LED         ((uint8_t) 0u)
@@ -63,7 +57,7 @@ static bool _test_pullup(uint32_t gpio)
     gpio_set_pin_level(TEST_ENABLE, false);
     success &= gpio_get_pin_level(gpio) == 0u;
     delay_ms(1);
-    
+
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
     delay_ms(1u);
     success &= gpio_get_pin_level(gpio) == 1u;
@@ -107,28 +101,28 @@ static float _read_analog(uint32_t adc, uint32_t ch)
 static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
 {
     float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
-    
+
     return lower < voltage && voltage < upper;
 }
 
 static bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider)
 {
     float voltage = _read_analog(adc, ch) / divider;
-    
+
     return lower < voltage && voltage < upper;
 }
 
 static bool _test_gpio(uint32_t driver, uint32_t sense)
 {
     bool success = true;
-    
+
     gpio_set_pin_direction(driver, GPIO_DIRECTION_OUT);
     //gpio_set_pin_direction(sense, GPIO_DIRECTION_OUT);
     //gpio_set_pin_level(sense, false);
     //gpio_set_pin_level(driver, false);
     //delay_ms(10u);
     gpio_set_pin_direction(sense, GPIO_DIRECTION_IN);
-    
+
     gpio_set_pin_level(driver, false);
     delay_ms(10u);
     if (gpio_get_pin_level(sense) != 0u)
@@ -168,7 +162,7 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
     {
         success = false;
     }
-    
+
     /*gpio_set_pin_level(driver, false);
     if (!_analog_expect(adc, adc_ch, 0.0f, 200.0f))
     {
@@ -178,12 +172,12 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
     /* test 5V */
     gpio_set_pin_level(iovcc, true);
     delay_ms(10u);
-    
+
     if (!_analog_expect(adc, adc_ch, 4200.0f, 5200.0f))
     {
         success = false;
     }
-    
+
     /*gpio_set_pin_level(driver, false);
     if (!_analog_expect(adc, adc_ch, 0.0f, 200.0f))
     {
@@ -207,7 +201,7 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
         float current_min;
         float current_max;
     };
-    
+
     static const struct test_case cases[] = {
         { .dr_en = false, .pwm_0 = false, .pwm_1 = false, .current_min = 0.0f, .current_max = 0.5f},
         { .dr_en = false, .pwm_0 = false, .pwm_1 = true,  .current_min = 0.0f, .current_max = 0.5f},
@@ -228,10 +222,10 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
     float current_measure_resistance = 0.120f;
     float nominal_current = motor_voltage / (dummy_resistance + current_measure_resistance);
     float measured_voltage = current_measure_resistance * nominal_current;
-    
+
     gpio_set_pin_direction(pwm_0, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(pwm_1, GPIO_DIRECTION_OUT);
-    
+
     for (uint8_t i = 0u; i < ARRAY_SIZE(cases); i++)
     {
         gpio_set_pin_level(dr_en, cases[i].dr_en);
@@ -263,13 +257,13 @@ static bool _test_motor_driver(uint32_t dr_en, uint32_t pwm_0, uint32_t pwm_1, u
 void test_init(void)
 {
     WS2812_Init();
-    
+
     gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OUT);
 
     gpio_set_pin_level(TEST_ENABLE, false);
     gpio_set_pin_level(TEST_CHARGER_EN, false);
-    
+
     gpio_set_pin_direction(S0_IOVCC, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(S1_IOVCC, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(S2_IOVCC, GPIO_DIRECTION_OUT);
@@ -278,7 +272,7 @@ void test_init(void)
     gpio_set_pin_level(S1_IOVCC, false);
     gpio_set_pin_level(S2_IOVCC, false);
     gpio_set_pin_level(S3_IOVCC, false);
-    
+
     hri_mclk_set_APBDMASK_ADC0_bit(MCLK);
     hri_mclk_set_APBDMASK_ADC1_bit(MCLK);
     hri_gclk_write_PCHCTRL_reg(GCLK, ADC0_GCLK_ID, CONF_GCLK_ADC0_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
@@ -286,7 +280,7 @@ void test_init(void)
 
     adc_sync_init(&adcs[0], ADC0);
     adc_sync_init(&adcs[1], ADC1);
-    
+
     adc_sync_enable_channel(&adcs[0], 0u);
     adc_sync_enable_channel(&adcs[1], 0u);
 
@@ -306,7 +300,7 @@ void test_leds(void)
     {
         WS2812_SetLed(led, COLOR_RED);
     }
-    
+
     delay_ms(1000u);
 
     for (uint8_t led = 0u; led < 16u; led++)
@@ -320,7 +314,7 @@ void test_leds(void)
 void test_pullups(void)
 {
     bool success = true;
-    
+
     success &= _test_pullup(AMP_EN_sense);
 
     success &= _test_pullup(S0_GPIO_IN);
@@ -331,7 +325,7 @@ void test_pullups(void)
     success &= _test_pullup(S2_GPIO_OUT);
     success &= _test_pullup(S3_GPIO_IN);
     success &= _test_pullup(S3_GPIO_OUT);
-    
+
     success &= _test_pullup(I2C0_SDApin);
     success &= _test_pullup(I2C0_SCLpin);
     success &= _test_pullup(I2C1_SDApin);
@@ -340,7 +334,7 @@ void test_pullups(void)
     success &= _test_pullup(I2C2_SCLpin);
     success &= _test_pullup(I2C3_SDApin);
     success &= _test_pullup(I2C3_SCLpin);
-    
+
     success &= _test_pullup(M0_ENC_A);
     success &= _test_pullup(M0_ENC_B);
     success &= _test_pullup(M1_ENC_A);
@@ -353,7 +347,7 @@ void test_pullups(void)
     success &= _test_pullup(M4_ENC_B);
     success &= _test_pullup(M5_ENC_A);
     success &= _test_pullup(M5_ENC_B);
-    
+
     success &= _test_pullup(M0_GREEN_LED);
     success &= _test_pullup(M1_GREEN_LED);
     success &= _test_pullup(M2_GREEN_LED);
@@ -375,7 +369,7 @@ void test_pullups(void)
     /* internal pullups, skip */
     // success &= _test_pullup(CHARGER_STAT);
     // success &= _test_pullup(CHARGER_STBY);
-    
+
     _indicate(TEST_PULLUP_LED, success);
 }
 
@@ -406,9 +400,9 @@ void test_charger(void)
     {
         success = false;
     }
-    
+
     gpio_set_pin_level(TEST_CHARGER_EN, true);
-    
+
     delay_ms(20u);
 
     bool changed = false;
@@ -563,7 +557,7 @@ void test_motor_ports(void)
     gpio_set_pin_direction(MOTOR_DRIVER_0_EN, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(MOTOR_DRIVER_1_EN, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(MOTOR_DRIVER_2_EN, GPIO_DIRECTION_OUT);
-    
+
     gpio_set_pin_level(MOTOR_DRIVER_0_EN, false);
     gpio_set_pin_level(MOTOR_DRIVER_1_EN, false);
     gpio_set_pin_level(MOTOR_DRIVER_2_EN, false);
@@ -574,7 +568,7 @@ void test_motor_ports(void)
     m0_result &= _test_gpio(ENCODER_DRIVER, M0_ENC_B);
     m0_result &= _test_motor_driver(MOTOR_DRIVER_1_EN, MOTOR_DRIVER_1_CH_A_PWM0_PIN, MOTOR_DRIVER_1_CH_A_PWM1_PIN, M0_ISEN_ADC, M0_ISEN_CH);
     _indicate(TEST_M0_LED, m0_result);
-    
+
     //#define M1_DRIVER_IDX       0
     //#define M1_DRIVER_CHANNEL   DRV8833_Channel_A
     bool m1_result = true;
@@ -582,7 +576,7 @@ void test_motor_ports(void)
     m1_result &= _test_gpio(ENCODER_DRIVER, M1_ENC_B);
     m1_result &= _test_motor_driver(MOTOR_DRIVER_0_EN, MOTOR_DRIVER_0_CH_A_PWM0_PIN, MOTOR_DRIVER_0_CH_A_PWM1_PIN, M1_ISEN_ADC, M1_ISEN_CH);
     _indicate(TEST_M1_LED, m1_result);
-    
+
     //#define M2_DRIVER_IDX       0
     //#define M2_DRIVER_CHANNEL   DRV8833_Channel_B
     bool m2_result = true;
@@ -590,7 +584,7 @@ void test_motor_ports(void)
     m2_result &= _test_gpio(ENCODER_DRIVER, M2_ENC_B);
     m2_result &= _test_motor_driver(MOTOR_DRIVER_0_EN, MOTOR_DRIVER_0_CH_B_PWM0_PIN, MOTOR_DRIVER_0_CH_B_PWM1_PIN, M2_ISEN_ADC, M2_ISEN_CH);
     _indicate(TEST_M2_LED, m2_result);
-    
+
     //#define M3_DRIVER_IDX       2
     //#define M3_DRIVER_CHANNEL   DRV8833_Channel_A
     bool m3_result = true;
@@ -598,7 +592,7 @@ void test_motor_ports(void)
     m3_result &= _test_gpio(ENCODER_DRIVER, M3_ENC_B);
     m3_result &= _test_motor_driver(MOTOR_DRIVER_2_EN, MOTOR_DRIVER_2_CH_A_PWM0_PIN, MOTOR_DRIVER_2_CH_A_PWM1_PIN, M3_ISEN_ADC, M3_ISEN_CH);
     _indicate(TEST_M3_LED, m3_result);
-    
+
     //#define M4_DRIVER_IDX       2
     //#define M4_DRIVER_CHANNEL   DRV8833_Channel_B
     bool m4_result = true;
@@ -606,7 +600,7 @@ void test_motor_ports(void)
     m4_result &= _test_gpio(ENCODER_DRIVER, M4_ENC_B);
     m4_result &= _test_motor_driver(MOTOR_DRIVER_2_EN, MOTOR_DRIVER_2_CH_B_PWM0_PIN, MOTOR_DRIVER_2_CH_B_PWM1_PIN, M4_ISEN_ADC, M4_ISEN_CH);
     _indicate(TEST_M4_LED, m4_result);
-    
+
     //#define M5_DRIVER_IDX       1
     //#define M5_DRIVER_CHANNEL   DRV8833_Channel_B
     bool m5_result = true;
@@ -619,7 +613,7 @@ void test_motor_ports(void)
 void test_imu(void)
 {
     bool success = true;
-    
+
     uint8_t whoami = imu_read_whoami();
 
     uint8_t accepted_whoami[] = { 0x6Au, 0x69u };
@@ -642,7 +636,7 @@ void test_imu(void)
     {
         success = false;
     }
-    
+
     _indicate(TEST_IMU_LED, success);
 }
 
@@ -653,7 +647,7 @@ void test_supply_adc(void)
     /* TODO: these may be more strict */
     success = _sysmon_analog_expect(1u, ADC_CH_BAT_VOLTAGE, 3000.0f, 4300.0f, 240.0f/340.0f );
     _indicate(TEST_BATTERY_ADC_LED, success);
-    
+
     success = _sysmon_analog_expect(1u, ADC_CH_MOT_VOLTAGE, 4000.0f, 11000.0f, 30.0f/130.0f );
     _indicate(TEST_MOTOR_ADC_LED, success);
 }
@@ -662,14 +656,14 @@ void test_sound(void)
 {
     hri_mclk_set_APBBMASK_TCC1_bit(MCLK);
     hri_gclk_write_PCHCTRL_reg(GCLK, TCC1_GCLK_ID, CONF_GCLK_TCC1_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-    
+
     gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OUT);
     gpio_set_pin_drive(SOUND_TEST_PWM, GPIO_DRIVE_STRONG);
     gpio_set_pin_function(SOUND_TEST_PWM, PINMUX_PD20F_TCC1_WO0);
-    
+
     PWM_0_init();
-    
+
     /* enable amplifier */
     gpio_set_pin_level(AMP_EN_sense, false);
     delay_ms(100u);
@@ -681,7 +675,7 @@ void test_sound(void)
     uint16_t sin_vals[1000];
     for (uint32_t i = 0u; i < 1000u; i++)
     {
-        float f = sin(2.0f * M_PI * i / 1001); /* 1kHz sine wave -1 .. 1 */
+        float f = sinf(2.0f * (float)M_PI * i / 1001); /* 1kHz sine wave -1 .. 1 */
         float scaled = ((f + 1.0f) / 2.0f) * 800.0f; /* -1 -> 0; 1-> PER */
 
         sin_vals[i] = lroundf(scaled);
@@ -700,7 +694,7 @@ void test_sound(void)
     gpio_set_pin_level(AMP_EN_sense, true);
 
     _indicate(TEST_TEST_DONE_LED, true);
-    
+
     gpio_set_pin_direction(AMP_EN_sense, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(SOUND_TEST_PWM, GPIO_DIRECTION_OFF);
 }
@@ -708,7 +702,7 @@ void test_sound(void)
 void test_end(void)
 {
     gpio_set_pin_level(TEST_ENABLE, false);
-    
+
     gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OFF);
 }

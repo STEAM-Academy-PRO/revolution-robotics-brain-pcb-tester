@@ -1,13 +1,3 @@
-/*
- * test.h
- *
- * Common include file for the business logic and drivers
- *
- * Created: 2019. 08. 06. 11:30:13
- *  Author: Dániel Buga
- */ 
-
-
 #ifndef TEST_H_
 #define TEST_H_
 
