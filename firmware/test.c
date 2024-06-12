@@ -442,6 +442,15 @@ void test_enable_connections(void)
 
 void test_sensor_ports(void)
 {
+    gpio_set_pin_direction(S0_LED_GREEN, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S1_LED_GREEN, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S2_LED_GREEN, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(S3_LED_GREEN, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(S0_LED_GREEN, false);
+    gpio_set_pin_level(S1_LED_GREEN, false);
+    gpio_set_pin_level(S2_LED_GREEN, false);
+    gpio_set_pin_level(S3_LED_GREEN, false);
+
     /* AIN pin is always connected to analog functions, no need to manually enable */
     bool s0_result = true;
     /*if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
