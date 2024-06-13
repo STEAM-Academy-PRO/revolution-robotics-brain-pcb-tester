@@ -424,7 +424,7 @@ void test_charger(void)
     }
 
     /* reset pins */
-    gpio_set_pin_level(TEST_CHARGER_EN, false);
+    // gpio_set_pin_level(TEST_CHARGER_EN, false);
 
     gpio_set_pin_direction(CHARGER_STAT, GPIO_DIRECTION_OFF);
     gpio_set_pin_pull_mode(CHARGER_STAT, GPIO_PULL_OFF);
