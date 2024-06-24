@@ -449,126 +449,88 @@ void test_enable_connections(void)
     delay_ms(1u);
 }
 
-void test_sensor_ports(void)
-{
-    gpio_set_pin_direction(S0_LED_GREEN, GPIO_DIRECTION_OUT);
-    gpio_set_pin_direction(S1_LED_GREEN, GPIO_DIRECTION_OUT);
-    gpio_set_pin_direction(S2_LED_GREEN, GPIO_DIRECTION_OUT);
-    gpio_set_pin_direction(S3_LED_GREEN, GPIO_DIRECTION_OUT);
-    gpio_set_pin_level(S0_LED_GREEN, false);
-    gpio_set_pin_level(S1_LED_GREEN, false);
-    gpio_set_pin_level(S2_LED_GREEN, false);
-    gpio_set_pin_level(S3_LED_GREEN, false);
+typedef struct {
+    uint32_t iovcc;
+    uint32_t ain;
+    uint32_t adc_per;
+    uint32_t adc_ch;
+    uint32_t gpio_out;
+    uint32_t gpio_in;
+    uint32_t sda;
+    uint32_t scl;
+    uint32_t led_green;
+    uint32_t led_yellow;
+} sensor_t;
 
+#define DECLARE_SENSOR_PORT(n) \
+static sensor_t s##n = { \
+    .iovcc = S ## n ## _IOVCC, \
+    .ain = S ## n ## _AIN, \
+    .adc_per = S ## n ## _ADC_PER, \
+    .adc_ch = S ## n ## _ADC_CH, \
+    .gpio_out = S ## n ## _GPIO_OUT, \
+    .gpio_in = S ## n ## _GPIO_IN, \
+    .sda = I2C ## n ## _SDApin, \
+    .scl = I2C ## n ## _SCLpin, \
+    .led_green = S ## n ## _LED_GREEN, \
+    .led_yellow = S ## n ## _LED_YELLOW, \
+}
+
+DECLARE_SENSOR_PORT(0);
+DECLARE_SENSOR_PORT(1);
+DECLARE_SENSOR_PORT(2);
+DECLARE_SENSOR_PORT(3);
+
+void init_test_sensor_port(sensor_t* sensor)
+{
+    gpio_set_pin_direction(sensor->led_green, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(sensor->led_green, false);
+}
+
+void test_sensor_port(uint8_t out_led, sensor_t* sensor)
+{
     /* AIN pin is always connected to analog functions, no need to manually enable */
-    bool s0_result = true;
+    bool result = true;
     /*if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
     {
-        s0_result = false;
+        result = false;
     }
     if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
     {
-        s0_result = false;
+        result = false;
     }
     if (!_test_gpio(I2C0_SDApin, S0_GPIO_IN))
     {
-        s0_result = false;
+        result = false;
     }
     if (!_test_gpio(S0_GPIO_OUT, I2C0_SCLpin))
     {
-        s0_result = false;
+        result = false;
     }
     if (!_test_gpio(I2C0_SCLpin, S0_GPIO_OUT))
     {
-        s0_result = false;
+        result = false;
     }*/
-    // TODO: triple check these. S0_GPIO_OUT should not be connected to AIN, S0_GPIO_IN should be?
-    if (!_test_analog(S0_GPIO_OUT, S0_IOVCC, S0_ADC_PER, S0_ADC_CH))
-    {
-        s0_result = false;
-    }
-    _indicate(TEST_S0_LED, s0_result);
 
-    bool s1_result = true;
-    /*if (!_test_gpio(S1_GPIO_IN, I2C1_SDApin))
+    // TODO: triple check these. GPIO_OUT should not be connected to AIN, GPIO_IN should be?
+    if (!_test_analog(sensor->gpio_out, sensor->iovcc, sensor->adc_per, sensor->adc_ch))
     {
-        s1_result = false;
+        result = false;
     }
-    if (!_test_gpio(S1_GPIO_IN, I2C1_SDApin))
-    {
-        s1_result = false;
-    }
-    if (!_test_gpio(I2C1_SDApin, S1_GPIO_IN))
-    {
-        s1_result = false;
-    }
-    if (!_test_gpio(S1_GPIO_OUT, I2C1_SCLpin))
-    {
-        s1_result = false;
-    }
-    if (!_test_gpio(I2C1_SCLpin, S1_GPIO_OUT))
-    {
-        s1_result = false;
-    }*/
-    if (!_test_analog(S1_GPIO_OUT, S1_IOVCC, S1_ADC_PER, S1_ADC_CH))
-    {
-        s1_result = false;
-    }
-    _indicate(TEST_S1_LED, s1_result);
+    _indicate(out_led, result);
+}
 
-    bool s2_result = true;
-    /*if (!_test_gpio(S2_GPIO_IN, I2C2_SDApin))
-    {
-        s2_result = false;
-    }
-    if (!_test_gpio(S2_GPIO_IN, I2C2_SDApin))
-    {
-        s2_result = false;
-    }
-    if (!_test_gpio(I2C2_SDApin, S2_GPIO_IN))
-    {
-        s2_result = false;
-    }
-    if (!_test_gpio(S2_GPIO_OUT, I2C2_SCLpin))
-    {
-        s2_result = false;
-    }
-    if (!_test_gpio(I2C2_SCLpin, S2_GPIO_OUT))
-    {
-        s2_result = false;
-    }*/
-    if (!_test_analog(S2_GPIO_OUT, S2_IOVCC, S2_ADC_PER, S2_ADC_CH))
-    {
-        s2_result = false;
-    }
-    _indicate(TEST_S2_LED, s2_result);
+void test_sensor_ports(void)
+{
+    init_test_sensor_port(&s0);
+    init_test_sensor_port(&s1);
+    init_test_sensor_port(&s2);
+    init_test_sensor_port(&s3);
 
-    bool s3_result = true;
-    /*if (!_test_gpio(S3_GPIO_IN, I2C3_SDApin))
-    {
-        s3_result = false;
-    }
-    if (!_test_gpio(S3_GPIO_IN, I2C3_SDApin))
-    {
-        s3_result = false;
-    }
-    if (!_test_gpio(I2C3_SDApin, S3_GPIO_IN))
-    {
-        s3_result = false;
-    }
-    if (!_test_gpio(S3_GPIO_OUT, I2C3_SCLpin))
-    {
-        s3_result = false;
-    }
-    if (!_test_gpio(I2C3_SCLpin, S3_GPIO_OUT))
-    {
-        s3_result = false;
-    }*/
-    if (!_test_analog(S3_GPIO_OUT, S3_IOVCC, S3_ADC_PER, S3_ADC_CH))
-    {
-        s3_result = false;
-    }
-    _indicate(TEST_S3_LED, s3_result);
+    test_sensor_port(TEST_S0_LED, &s0);
+    test_sensor_port(TEST_S1_LED, &s1);
+    test_sensor_port(TEST_S2_LED, &s2);
+    test_sensor_port(TEST_S3_LED, &s3);
 }
 
 void test_motor_ports(void)
