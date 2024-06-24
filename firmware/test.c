@@ -7,6 +7,7 @@
 #include <math.h>
 #include "utils.h"
 
+/* Visual outputs */
 #define TEST_PULLUP_LED         ((uint8_t) 0u)
 #define TEST_CHARGER_LED        ((uint8_t) 1u)
 #define TEST_S0_LED             ((uint8_t) 2u)
@@ -147,6 +148,13 @@ static bool _test_gpio(uint32_t driver, uint32_t sense)
     return success;
 }
 
+/**
+ * Sensor port AIN tests.
+ *
+ * This test drives a sensor port digital pin with both level shifter settings:
+ * 3V3 and 5V. The AIN pin is connected to the digital pin and the voltage is
+ * measured with the ADC.
+ */
 static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t adc_ch)
 {
     bool success = true;
@@ -268,6 +276,7 @@ void test_init(void)
     gpio_set_pin_direction(S1_IOVCC, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(S2_IOVCC, GPIO_DIRECTION_OUT);
     gpio_set_pin_direction(S3_IOVCC, GPIO_DIRECTION_OUT);
+    // Set IOVCC to 3V3
     gpio_set_pin_level(S0_IOVCC, false);
     gpio_set_pin_level(S1_IOVCC, false);
     gpio_set_pin_level(S2_IOVCC, false);
@@ -473,6 +482,7 @@ void test_sensor_ports(void)
     {
         s0_result = false;
     }*/
+    // TODO: triple check these. S0_GPIO_OUT should not be connected to AIN, S0_GPIO_IN should be?
     if (!_test_analog(S0_GPIO_OUT, S0_IOVCC, S0_ADC_PER, S0_ADC_CH))
     {
         s0_result = false;

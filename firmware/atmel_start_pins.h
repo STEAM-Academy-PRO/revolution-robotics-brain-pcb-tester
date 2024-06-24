@@ -360,3 +360,126 @@
 #define ENCODER_DRIVER  PB18
 
 #endif // ATMEL_START_PINS_H_INCLUDED
+
+/* ========== Test points ========== */
+// Test points are not necessarily used in software, they are connected through the test jig either
+// statically or through relays. They are listed here for reference.
+// Where the define is not empty, the test point is connected to the MCU
+//   and the define is the pin name. If the test point is connected, the test hardware
+//   is set up in a way that tests the maximum amount of components on the signal chain.
+// Where the define is empty, the test point is not connected to the MCU.
+
+/* Static connections. */
+// MCU connected:
+#define TP99  PC19 // RPI_GPIO2
+#define TP100 PC20 // RPI_GPIO3
+#define TP101 PC22 // RPI_GPIO4
+#define TP105 PD20 // RPI_GPIO5
+// PCB connected:
+// I2C wiring test
+#define TP92 PA12 // I2C4_SDA
+#define TP93 PA13 // I2C4_SCL
+// Sound test
+#define TP97  // AMP_EN
+#define TP104 // RPI_PWM
+
+/* LED board */
+#define TP145 // 5V
+#define TP146 WS2812pin
+#define TP147 // GND
+#define TP148 // SPK+
+#define TP149 // SPK-
+
+/* SEN3 */
+#define TP108 S3_GPIO_OUT
+#define TP110 I2C3_SDApin
+#define TP111 I2C3_SCLpin
+#define TP112 S3_AIN
+#define TP113 S3_GPIO_IN
+
+/* SEN2 */
+#define TP117 S2_GPIO_OUT
+#define TP119 I2C2_SDApin
+#define TP120 I2C2_SCLpin
+#define TP121 S2_AIN
+#define TP122 S2_GPIO_IN
+
+/* SEN1 */
+#define TP126 S1_GPIO_OUT
+#define TP128 I2C1_SDApin
+#define TP129 I2C1_SCLpin
+#define TP130 S1_AIN
+#define TP131 S1_GPIO_IN
+
+/* SEN0 */
+#define TP135 S0_GPIO_OUT
+#define TP137 I2C0_SDApin
+#define TP138 I2C0_SCLpin
+#define TP139 S0_AIN
+#define TP140 S0_GPIO_IN
+
+/* Motor resistors */
+#define TP36 // MOT2+
+#define TP40 // MOT2-
+#define TP44 // MOT1+
+#define TP48 // MOT1-
+#define TP52 // MOT0+
+#define TP56 // MOT0-
+#define TP60 // MOT5+
+#define TP64 // MOT5-
+#define TP68 // MOT4+
+#define TP72 // MOT4-
+#define TP76 // MOT3+
+#define TP80 // MOT3-
+
+/* Analog voltages */
+#define TP136 // SEN0_3V
+#define TP127 // SEN1_3V
+#define TP118 // SEN2_3V
+#define TP109 // SEN3_3V
+#define TP134 // SEN0_5V
+#define TP125 // SEN1_5V
+#define TP116 // SEN2_5V
+#define TP107 // SEN3_5V
+#define TP77  // MOT3_5V
+#define TP69  // MOT4_5V
+#define TP61  // MOT5_5V
+#define TP37  // MOT2_5V
+#define TP45  // MOT1_5V
+#define TP53  // MOT0_5V
+#define TP88  // 4.5V
+
+/* Programming pins */
+#define TP17      // 3.3V VTarget
+#define TP26 PA31 // SWDIO
+#define TP20 PA30 // SWCLK
+#define TP29      // DBG_RST
+#define TP23      // GND
+
+/* Battery charger */
+#define TP91                 // 5V_RPI
+#define TP98 TEST_CHARGER_EN // RPI_GPIO1
+
+/* Power supplies */
+#define TP83 // +10V motor supply
+#define TP84 // VBAT
+#define TP94 // GND
+
+/* Motor encoders */
+#define TP103 TEST_ENABLE    // RPI_GPIO0
+#define TP106 ENCODER_DRIVER // RPI_GPIO6
+
+// Motor encoder inputs. Note that these are connected directly through other TPs but the ones
+// listed here go through some singal processing that must be tested.
+#define TP34 M2_ENC_A
+#define TP38 M2_ENC_B
+#define TP42 M1_ENC_A
+#define TP46 M1_ENC_B
+#define TP50 M0_ENC_A
+#define TP54 M0_ENC_B
+#define TP58 M5_ENC_A
+#define TP62 M5_ENC_B
+#define TP66 M4_ENC_A
+#define TP70 M4_ENC_B
+#define TP74 M3_ENC_A
+#define TP78 M3_ENC_B
