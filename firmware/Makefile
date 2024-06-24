@@ -42,6 +42,9 @@ C_SRCS += \
     ./Atmel/hpl/tcc/tcc_lite.c \
     ./Atmel/hpl/tc/hpl_tc.c \
     ./Atmel/hpl/tc/tc_lite.c \
+    ./RTT/SEGGER_RTT.c \
+	./RTT/SEGGER_RTT_printf.c \
+	./RTT/Syscalls/SEGGER_RTT_Syscalls_GCC.c \
     ./driver_init.c \
     ./imu.c \
     ./led.c \
@@ -74,6 +77,7 @@ INCLUDE_PATHS += \
     ./Atmel/hpl/wdt \
     ./Atmel/hri \
 	./Atmel/samd51a/include \
+	./RTT \
     ./CMSIS/Include
 
 COMPILE_FLAGS += \

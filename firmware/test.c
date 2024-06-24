@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include "utils.h"
+#include "SEGGER_RTT.h"
 
 /* Visual outputs */
 #define TEST_PULLUP_LED         ((uint8_t) 0u)
@@ -47,23 +48,38 @@ static void _indicate(uint8_t led, bool success)
     }
 }
 
-static bool _test_pullup(uint32_t gpio)
+static void _pullup_test_fail(const char* gpio_name, const char* msg)
+{
+    SEGGER_RTT_printf(0, "Pullup test failed on pin %s: %s\n", gpio_name, msg);
+}
+
+static bool _test_pullup(uint32_t gpio, const char* gpio_name)
 {
     /* by default they should be pulled up */
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
-    bool success = gpio_get_pin_level(gpio) == 1u;
+    bool initial = gpio_get_pin_level(gpio) == 1u;
+    if (!initial) {
+        _pullup_test_fail(gpio_name, "initial state not pulled up");
+    }
 
     /* pull them down and release them */
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_INOUT);
     gpio_set_pin_level(TEST_ENABLE, false);
-    success &= gpio_get_pin_level(gpio) == 0u;
+    bool pulldown = gpio_get_pin_level(gpio) == 0u;
+    if (!pulldown) {
+        _pullup_test_fail(gpio_name, "not pulled down");
+    }
+
     delay_ms(1);
 
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
     delay_ms(1u);
-    success &= gpio_get_pin_level(gpio) == 1u;
+    bool pullup = gpio_get_pin_level(gpio) == 1u;
+    if (!pullup) {
+        _pullup_test_fail(gpio_name, "not pulled up");
+    }
 
-    return success;
+    return initial && pulldown && pullup;
 }
 
 static float _read_analog(uint32_t adc, uint32_t ch)
@@ -324,56 +340,56 @@ void test_pullups(void)
 {
     bool success = true;
 
-    success &= _test_pullup(AMP_EN_sense);
+    success &= _test_pullup(AMP_EN_sense, "R?");
 
-    success &= _test_pullup(S0_GPIO_IN);
-    success &= _test_pullup(S0_GPIO_OUT);
-    success &= _test_pullup(S1_GPIO_IN);
-    success &= _test_pullup(S1_GPIO_OUT);
-    success &= _test_pullup(S2_GPIO_IN);
-    success &= _test_pullup(S2_GPIO_OUT);
-    success &= _test_pullup(S3_GPIO_IN);
-    success &= _test_pullup(S3_GPIO_OUT);
+    success &= _test_pullup(S0_GPIO_IN, "R?");
+    success &= _test_pullup(S0_GPIO_OUT, "R?");
+    success &= _test_pullup(S1_GPIO_IN, "R?");
+    success &= _test_pullup(S1_GPIO_OUT, "R?");
+    success &= _test_pullup(S2_GPIO_IN, "R?");
+    success &= _test_pullup(S2_GPIO_OUT, "R?");
+    success &= _test_pullup(S3_GPIO_IN, "R?");
+    success &= _test_pullup(S3_GPIO_OUT, "R?");
 
-    success &= _test_pullup(I2C0_SDApin);
-    success &= _test_pullup(I2C0_SCLpin);
-    success &= _test_pullup(I2C1_SDApin);
-    success &= _test_pullup(I2C1_SCLpin);
-    success &= _test_pullup(I2C2_SDApin);
-    success &= _test_pullup(I2C2_SCLpin);
-    success &= _test_pullup(I2C3_SDApin);
-    success &= _test_pullup(I2C3_SCLpin);
+    success &= _test_pullup(I2C0_SDApin, "R?");
+    success &= _test_pullup(I2C0_SCLpin, "R?");
+    success &= _test_pullup(I2C1_SDApin, "R?");
+    success &= _test_pullup(I2C1_SCLpin, "R?");
+    success &= _test_pullup(I2C2_SDApin, "R?");
+    success &= _test_pullup(I2C2_SCLpin, "R?");
+    success &= _test_pullup(I2C3_SDApin, "R?");
+    success &= _test_pullup(I2C3_SCLpin, "R?");
 
-    success &= _test_pullup(M0_ENC_A);
-    success &= _test_pullup(M0_ENC_B);
-    success &= _test_pullup(M1_ENC_A);
-    success &= _test_pullup(M1_ENC_B);
-    success &= _test_pullup(M2_ENC_A);
-    success &= _test_pullup(M2_ENC_B);
-    success &= _test_pullup(M3_ENC_A);
-    success &= _test_pullup(M3_ENC_B);
-    success &= _test_pullup(M4_ENC_A);
-    success &= _test_pullup(M4_ENC_B);
-    success &= _test_pullup(M5_ENC_A);
-    success &= _test_pullup(M5_ENC_B);
+    success &= _test_pullup(M0_ENC_A, "R?");
+    success &= _test_pullup(M0_ENC_B, "R?");
+    success &= _test_pullup(M1_ENC_A, "R?");
+    success &= _test_pullup(M1_ENC_B, "R?");
+    success &= _test_pullup(M2_ENC_A, "R?");
+    success &= _test_pullup(M2_ENC_B, "R?");
+    success &= _test_pullup(M3_ENC_A, "R?");
+    success &= _test_pullup(M3_ENC_B, "R?");
+    success &= _test_pullup(M4_ENC_A, "R?");
+    success &= _test_pullup(M4_ENC_B, "R?");
+    success &= _test_pullup(M5_ENC_A, "R?");
+    success &= _test_pullup(M5_ENC_B, "R?");
 
-    success &= _test_pullup(M0_GREEN_LED);
-    success &= _test_pullup(M1_GREEN_LED);
-    success &= _test_pullup(M2_GREEN_LED);
-    success &= _test_pullup(M3_GREEN_LED);
-    success &= _test_pullup(M4_GREEN_LED);
-    success &= _test_pullup(M5_GREEN_LED);
-    success &= _test_pullup(MOTOR_DRIVER_0_YELLOW);
-    success &= _test_pullup(MOTOR_DRIVER_1_YELLOW);
-    success &= _test_pullup(MOTOR_DRIVER_2_YELLOW);
-    success &= _test_pullup(S0_LED_GREEN);
-    success &= _test_pullup(S1_LED_GREEN);
-    success &= _test_pullup(S2_LED_GREEN);
-    success &= _test_pullup(S3_LED_GREEN);
-    success &= _test_pullup(S0_LED_YELLOW);
-    success &= _test_pullup(S1_LED_YELLOW);
-    success &= _test_pullup(S2_LED_YELLOW);
-    success &= _test_pullup(S3_LED_YELLOW);
+    success &= _test_pullup(M0_GREEN_LED, "R?");
+    success &= _test_pullup(M1_GREEN_LED, "R?");
+    success &= _test_pullup(M2_GREEN_LED, "R?");
+    success &= _test_pullup(M3_GREEN_LED, "R?");
+    success &= _test_pullup(M4_GREEN_LED, "R?");
+    success &= _test_pullup(M5_GREEN_LED, "R?");
+    success &= _test_pullup(MOTOR_DRIVER_0_YELLOW, "R?");
+    success &= _test_pullup(MOTOR_DRIVER_1_YELLOW, "R?");
+    success &= _test_pullup(MOTOR_DRIVER_2_YELLOW, "R?");
+    success &= _test_pullup(S0_LED_GREEN, "R?");
+    success &= _test_pullup(S1_LED_GREEN, "R?");
+    success &= _test_pullup(S2_LED_GREEN, "R?");
+    success &= _test_pullup(S3_LED_GREEN, "R?");
+    success &= _test_pullup(S0_LED_YELLOW, "R?");
+    success &= _test_pullup(S1_LED_YELLOW, "R?");
+    success &= _test_pullup(S2_LED_YELLOW, "R?");
+    success &= _test_pullup(S3_LED_YELLOW, "R?");
 
     /* internal pullups, skip */
     // success &= _test_pullup(CHARGER_STAT);

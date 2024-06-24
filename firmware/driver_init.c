@@ -10,10 +10,13 @@
 #include <peripheral_clk_config.h>
 #include <utils.h>
 #include <hal_init.h>
+#include "SEGGER_RTT.h"
 
 //*********************************************************************************************
 void system_init(void)
 {
+    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+
     init_mcu();
 
     hri_mclk_set_APBAMASK_SUPC_bit(MCLK);
