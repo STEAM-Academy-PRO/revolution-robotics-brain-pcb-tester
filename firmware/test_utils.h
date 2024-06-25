@@ -1,14 +1,9 @@
-#ifndef TEST_H_
-#define TEST_H_
+#ifndef TEST_UTILS_H_
+#define TEST_UTILS_H_
 
-#include <hal_delay.h>
-
-#include "atmel_start_pins.h"
-#include <peripheral_clk_config.h>
-
-#include <math.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "utils.h"
-#include "SEGGER_RTT.h"
 
 #define COLOR_OFF     ((uint8_t) 0u)
 #define COLOR_RED     ((uint8_t) 1u)
@@ -33,20 +28,18 @@
 #define TEST_MOTOR_ADC_LED      ((uint8_t) 14u)
 #define TEST_TEST_DONE_LED      ((uint8_t) 15u)
 
-void test_init(void);
-void test_leds(void);
-void test_pullups(void);
-void test_charger(void);
-void test_enable_motor_encoder_relays(void);
-void test_sensor_ports(void);
-void test_motor_ports(void);
-void test_supply_adc(void);
-void test_imu(void);
-void test_sound(void);
-void test_end(void);
+void adc_init(void);
 
-void imu_init(void);
-uint8_t imu_read_whoami(void);
-bool imu_run_selftest(void);
+void WS2812_Init(void);
+void WS2812_Write(uint8_t colors[16]);
+void WS2812_SetLed(uint8_t led, uint8_t color);
 
-#endif /* TEST_H_ */
+void _indicate(uint8_t led, bool success);
+bool _test_gpio(uint32_t driver, uint32_t sense);
+
+float map(float in, float min_in, float max_in, float min_out, float max_out);
+float _read_analog(uint32_t adc, uint32_t ch);
+bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper);
+bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider);
+
+#endif /* TEST_UTILS_H_ */

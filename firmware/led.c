@@ -1,16 +1,9 @@
-/*
- * led.c
- *
- * Simple WS2812 driver, generates waveforms using SPI
- *
- * Created: 2019. 08. 06. 11:28:07
- *  Author: Dániel Buga
- */ 
-
-#include "test.h"
+#include "test_utils.h"
 
 #include <string.h>
 
+#include "atmel_start_pins.h"
+#include <peripheral_clk_config.h>
 #include <hal_spi_m_sync.h>
 
 #define LED_VAL_ZERO    ((uint8_t) ~0xC0u)
@@ -100,7 +93,7 @@ static void _send(void)
         .rxbuf = NULL,
         .size = sizeof(frame_leds)
     };
-    
+
     gpio_set_pin_function(WS2812pin, WS2812pin_function);
     spi_m_sync_transfer(&SPI_0, &xfer);
     gpio_set_pin_level(WS2812pin, true);

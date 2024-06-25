@@ -49,7 +49,10 @@ C_SRCS += \
     ./imu.c \
     ./led.c \
     ./main.c \
-    ./test.c
+    ./test.c \
+    ./test_utils.c \
+    ./test_sensors.c \
+    ./test_motors.c
 
 INCLUDE_PATHS += \
     ./Config \

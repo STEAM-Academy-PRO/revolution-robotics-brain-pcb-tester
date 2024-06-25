@@ -1,10 +1,3 @@
-/*
- * imu.c
- *
- * Created: 2019. 08. 07. 17:17:14
- *  Author: Dániel Buga
- */ 
-
 #include "test.h"
 #include <hal_spi_m_sync.h>
 #include <hal_delay.h>
@@ -22,7 +15,7 @@ static inline void _imu_send_write_address(uint8_t addr)
     xfer.txbuf = &address;
     xfer.rxbuf = NULL;
     xfer.size = 1u;
-    
+
     spi_m_sync_transfer(&spi, &xfer);
 }
 
@@ -35,7 +28,7 @@ static inline void _imu_send_read_address(uint8_t addr)
     xfer.txbuf = &address;
     xfer.rxbuf = NULL;
     xfer.size = 1u;
-    
+
     spi_m_sync_transfer(&spi, &xfer);
 }
 
@@ -46,7 +39,7 @@ static void _imu_write_registers(uint8_t reg, uint8_t* pData, size_t data_count)
     xfer.txbuf = pData;
     xfer.rxbuf = NULL;
     xfer.size = data_count;
-    
+
     gpio_set_pin_level(IMU_CS_pin, false);
     _imu_send_write_address(reg);
     spi_m_sync_transfer(&spi, &xfer);
@@ -60,7 +53,7 @@ static void _imu_read_registers(uint8_t reg, uint8_t* pData, size_t data_count)
     xfer.txbuf = NULL;
     xfer.rxbuf = pData;
     xfer.size = data_count;
-    
+
     gpio_set_pin_level(IMU_CS_pin, false);
     _imu_send_read_address(reg);
     spi_m_sync_transfer(&spi, &xfer);
@@ -70,14 +63,14 @@ static void _imu_read_registers(uint8_t reg, uint8_t* pData, size_t data_count)
 static void _imu_write_register(uint8_t reg, uint8_t data)
 {
     struct spi_xfer xfer;
-    
+
     uint8_t address = reg & 0x7Fu;
     uint8_t buffer[] = {address, data};
 
     xfer.txbuf = buffer;
     xfer.rxbuf = NULL;
     xfer.size = 2u;
-    
+
     gpio_set_pin_level(IMU_CS_pin, false);
     spi_m_sync_transfer(&spi, &xfer);
     gpio_set_pin_level(IMU_CS_pin, true);
@@ -86,7 +79,7 @@ static void _imu_write_register(uint8_t reg, uint8_t data)
 static uint8_t _imu_read_register(uint8_t reg)
 {
     struct spi_xfer xfer;
-    
+
     uint8_t address = 0x80u | (reg & 0x7Fu);
     uint8_t txBuffer[] = {address, 0xFFu};
     uint8_t rxBuffer[2];
@@ -94,7 +87,7 @@ static uint8_t _imu_read_register(uint8_t reg)
     xfer.txbuf = txBuffer;
     xfer.rxbuf = rxBuffer;
     xfer.size = 2u;
-    
+
     gpio_set_pin_level(IMU_CS_pin, false);
     spi_m_sync_transfer(&spi, &xfer);
     gpio_set_pin_level(IMU_CS_pin, true);
@@ -143,7 +136,7 @@ void imu_init(void)
 
     spi_m_sync_init(&spi, IMU_SERCOM);
     spi_m_sync_enable(&spi);
-    
+
     /* disable i2c */
     delay_ms(20u);
     _imu_write_register(0x13u, 0x04u);
@@ -216,7 +209,7 @@ void read_axl_sample(imu_axl_t* data)
     {
         /* wait */
     }
-    /* 
+    /*
     registers: (L, H)
     accel X: 28, 29
     accel Y: 2A, 2B
@@ -224,7 +217,7 @@ void read_axl_sample(imu_axl_t* data)
     */
     uint8_t regs[6];
     _imu_read_registers(0x28u, regs, sizeof(regs));
-    
+
     data->x = regs[0] | (regs[1] << 8u);
     data->y = regs[2] | (regs[3] << 8u);
     data->z = regs[4] | (regs[5] << 8u);
@@ -243,12 +236,12 @@ void read_averaged_axl_sample(imu_axl_t* data)
     for (uint8_t i = 0u; i < 8u; i++)
     {
         read_axl_sample(&axl);
-        
+
         x += axl.x;
         y += axl.y;
         z += axl.z;
     }
-    
+
     data->x = x >> 3u;
     data->y = y >> 3u;
     data->z = z >> 3u;
@@ -260,7 +253,7 @@ void read_rot_sample(imu_rot_t* data)
     {
         /* wait */
     }
-    /* 
+    /*
     registers: (L, H)
     rotat X: 22, 23
     rotat Y: 24, 25
@@ -268,7 +261,7 @@ void read_rot_sample(imu_rot_t* data)
     */
     uint8_t regs[6];
     _imu_read_registers(0x22u, regs, sizeof(regs));
-    
+
     data->x = regs[0] | (regs[1] << 8u);
     data->y = regs[2] | (regs[3] << 8u);
     data->z = regs[4] | (regs[5] << 8u);
@@ -287,12 +280,12 @@ void read_averaged_rot_sample(imu_rot_t* data)
     for (uint8_t i = 0u; i < 8u; i++)
     {
         read_rot_sample(&rot);
-        
+
         x += rot.x;
         y += rot.y;
         z += rot.z;
     }
-    
+
     data->x = x >> 3u;
     data->y = y >> 3u;
     data->z = z >> 3u;
@@ -319,13 +312,13 @@ bool imu_run_selftest(void)
     /* configure INT1 as XL, INT2 as gyro data ready */
     _imu_write_register(0x0Du, 0x01u);
     _imu_write_register(0x0Eu, 0x02u);
-    
+
     /* by default, low address = low byte */
     /* default: FIFO bypass */
-    
+
     _imu_write_register(0x10u, 0x60u); /**< axl 416Hz, +/-2g, LPF1=0 */
     _imu_write_register(0x11u, 0x60u); /**< gyro 416Hz, +/-245dps */
-    
+
     _imu_write_register(0x16u, 0x00u); /**< gyro HPF off */
     _imu_write_register(0x17u, 0x00u); /**< axl LPF off */
 
@@ -335,18 +328,18 @@ bool imu_run_selftest(void)
     bool success = true;
 
     /* test signal is somewhere between 90..1700mg of acceleration */
-    
+
     /* set positive test signal on acceleration */
     axl_set_positive_test_signal();
     read_averaged_axl_sample(&active_acceleration);
-    success &= (active_acceleration.x - idle_acceleration.x) > 1500; /* 1LSb = 0.061 mg at ±2 g full scale */
+    success &= (active_acceleration.x - idle_acceleration.x) > 1500; /* 1LSb = 0.061 mg at ï¿½2 g full scale */
     success &= (active_acceleration.y - idle_acceleration.y) > 1500;
     success &= (active_acceleration.z - idle_acceleration.z) > 1500;
 
     /* set negative test signal on acceleration */
     axl_set_negative_test_signal();
     read_averaged_axl_sample(&active_acceleration);
-    success &= (active_acceleration.x - idle_acceleration.x) < -1500; /* 1LSb = 0.061 mg at ±2 g full scale */
+    success &= (active_acceleration.x - idle_acceleration.x) < -1500; /* 1LSb = 0.061 mg at ï¿½2 g full scale */
     success &= (active_acceleration.y - idle_acceleration.y) < -1500;
     success &= (active_acceleration.z - idle_acceleration.z) < -1500;
 
@@ -361,14 +354,14 @@ bool imu_run_selftest(void)
     /* set positive test signal on rotation */
     rot_set_positive_test_signal();
     read_averaged_rot_sample(&active_rotation);
-    success &= (active_rotation.x - idle_rotation.x) > 200; /* 1LSb = 70 mdps at ±2000 dps full scale */
+    success &= (active_rotation.x - idle_rotation.x) > 200; /* 1LSb = 70 mdps at ï¿½2000 dps full scale */
     success &= (active_rotation.y - idle_rotation.y) > 200;
     success &= (active_rotation.z - idle_rotation.z) > 200;
-    
+
     /* set negative test signal on rotation */
     rot_set_negative_test_signal();
     read_averaged_rot_sample(&active_rotation);
-    success &= (active_rotation.x - idle_rotation.x) < -200; /* 1LSb = 70 mdps at ±2000 dps full scale */
+    success &= (active_rotation.x - idle_rotation.x) < -200; /* 1LSb = 70 mdps at ï¿½2000 dps full scale */
     success &= (active_rotation.y - idle_rotation.y) < -200;
     success &= (active_rotation.z - idle_rotation.z) < -200;
 
