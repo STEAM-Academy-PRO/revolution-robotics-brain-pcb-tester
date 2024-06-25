@@ -342,56 +342,70 @@ void test_pullups(void)
 {
     bool success = true;
 
-    success &= TEST_PULLUP(AMP_EN_sense, "R?");
+    success &= TEST_PULLUP(AMP_EN_sense, "R120");
 
-    success &= TEST_PULLUP(S0_GPIO_IN, "R?");
-    success &= TEST_PULLUP(S0_GPIO_OUT, "R?");
-    success &= TEST_PULLUP(S1_GPIO_IN, "R?");
-    success &= TEST_PULLUP(S1_GPIO_OUT, "R?");
-    success &= TEST_PULLUP(S2_GPIO_IN, "R?");
-    success &= TEST_PULLUP(S2_GPIO_OUT, "R?");
-    success &= TEST_PULLUP(S3_GPIO_IN, "R?");
-    success &= TEST_PULLUP(S3_GPIO_OUT, "R?");
+    // IN pins are connected to AIN and SCL.
+    // AIN has a 100K series resistor and a 150K pulldown.
+    // IN and SCL are passing through a level shifter. The level shifter has internal 10K pullups.
+    // AIN is tested separately during sensor port testing.
+    // Series resistors should be tested during sensor port tests.
+    success &= TEST_PULLUP(S0_GPIO_IN, "U19");
+    success &= TEST_PULLUP(S1_GPIO_IN, "U18");
+    success &= TEST_PULLUP(S2_GPIO_IN, "U17");
+    success &= TEST_PULLUP(S3_GPIO_IN, "U15");
 
-    success &= TEST_PULLUP(I2C0_SDApin, "R?");
-    success &= TEST_PULLUP(I2C0_SCLpin, "R?");
-    success &= TEST_PULLUP(I2C1_SDApin, "R?");
-    success &= TEST_PULLUP(I2C1_SCLpin, "R?");
-    success &= TEST_PULLUP(I2C2_SDApin, "R?");
-    success &= TEST_PULLUP(I2C2_SCLpin, "R?");
-    success &= TEST_PULLUP(I2C3_SDApin, "R?");
-    success &= TEST_PULLUP(I2C3_SCLpin, "R?");
+    // These don't test the resistors themselves, but the soldering of the level shifter.
+    success &= TEST_PULLUP(I2C0_SCLpin, "U19");
+    success &= TEST_PULLUP(I2C1_SCLpin, "U18");
+    success &= TEST_PULLUP(I2C2_SCLpin, "U17");
+    success &= TEST_PULLUP(I2C3_SCLpin, "U15");
 
-    success &= TEST_PULLUP(M0_ENC_A, "R?");
-    success &= TEST_PULLUP(M0_ENC_B, "R?");
-    success &= TEST_PULLUP(M1_ENC_A, "R?");
-    success &= TEST_PULLUP(M1_ENC_B, "R?");
-    success &= TEST_PULLUP(M2_ENC_A, "R?");
-    success &= TEST_PULLUP(M2_ENC_B, "R?");
-    success &= TEST_PULLUP(M3_ENC_A, "R?");
-    success &= TEST_PULLUP(M3_ENC_B, "R?");
-    success &= TEST_PULLUP(M4_ENC_A, "R?");
-    success &= TEST_PULLUP(M4_ENC_B, "R?");
-    success &= TEST_PULLUP(M5_ENC_A, "R?");
-    success &= TEST_PULLUP(M5_ENC_B, "R?");
+    // OUT pins are connected to SDA.
+    // OUT and SDA are passing through the same level shifter as above.
+    // Series resistors are tested elsewhere.
+    success &= TEST_PULLUP(S0_GPIO_OUT, "U19");
+    success &= TEST_PULLUP(S1_GPIO_OUT, "U18");
+    success &= TEST_PULLUP(S2_GPIO_OUT, "U17");
+    success &= TEST_PULLUP(S3_GPIO_OUT, "U15");
 
-    success &= TEST_PULLUP(M0_GREEN_LED, "R?");
-    success &= TEST_PULLUP(M1_GREEN_LED, "R?");
-    success &= TEST_PULLUP(M2_GREEN_LED, "R?");
-    success &= TEST_PULLUP(M3_GREEN_LED, "R?");
-    success &= TEST_PULLUP(M4_GREEN_LED, "R?");
-    success &= TEST_PULLUP(M5_GREEN_LED, "R?");
-    success &= TEST_PULLUP(MOTOR_DRIVER_0_YELLOW, "R?");
-    success &= TEST_PULLUP(MOTOR_DRIVER_1_YELLOW, "R?");
-    success &= TEST_PULLUP(MOTOR_DRIVER_2_YELLOW, "R?");
-    success &= TEST_PULLUP(S0_LED_GREEN, "R?");
-    success &= TEST_PULLUP(S1_LED_GREEN, "R?");
-    success &= TEST_PULLUP(S2_LED_GREEN, "R?");
-    success &= TEST_PULLUP(S3_LED_GREEN, "R?");
-    success &= TEST_PULLUP(S0_LED_YELLOW, "R?");
-    success &= TEST_PULLUP(S1_LED_YELLOW, "R?");
-    success &= TEST_PULLUP(S2_LED_YELLOW, "R?");
-    success &= TEST_PULLUP(S3_LED_YELLOW, "R?");
+    // These don't test the resistors themselves, but the soldering of the level shifter.
+    success &= TEST_PULLUP(I2C0_SDApin, "U19");
+    success &= TEST_PULLUP(I2C1_SDApin, "U18");
+    success &= TEST_PULLUP(I2C2_SDApin, "U17");
+    success &= TEST_PULLUP(I2C3_SDApin, "U15");
+
+    // TODO: We should be able to narrow the components down based on the specific failure.
+    success &= TEST_PULLUP(M0_ENC_A, "R39, R170, R46, C30, D21");
+    success &= TEST_PULLUP(M1_ENC_A, "R23, R168, R32, C25, D13");
+    success &= TEST_PULLUP(M2_ENC_A, "R9, R166, R17, C17, D7");
+    success &= TEST_PULLUP(M3_ENC_A, "R80, R176, R88, C51, D41");
+    success &= TEST_PULLUP(M4_ENC_A, "R67, R174, R74, C42, D35");
+    success &= TEST_PULLUP(M5_ENC_A, "R51, R172, R60, C38, D27");
+
+    success &= TEST_PULLUP(M0_ENC_B, "R38, R169, R45, C29, D20");
+    success &= TEST_PULLUP(M1_ENC_B, "R22, R167, R31, C24, D12");
+    success &= TEST_PULLUP(M2_ENC_B, "R8, R165, R16, C16, D6");
+    success &= TEST_PULLUP(M3_ENC_B, "R79, R175, R87, C50, D40");
+    success &= TEST_PULLUP(M4_ENC_B, "R66, R173, R73, C41, D34");
+    success &= TEST_PULLUP(M5_ENC_B, "R50, R171, R59, C37, D26");
+
+    success &= TEST_PULLUP(M0_GREEN_LED, "R35");
+    success &= TEST_PULLUP(M1_GREEN_LED, "R21");
+    success &= TEST_PULLUP(M2_GREEN_LED, "R11");
+    success &= TEST_PULLUP(M3_GREEN_LED, "R75");
+    success &= TEST_PULLUP(M4_GREEN_LED, "R63");
+    success &= TEST_PULLUP(M5_GREEN_LED, "R49");
+    success &= TEST_PULLUP(MOTOR_DRIVER_0_YELLOW, "R18, R21"); //MOT12
+    success &= TEST_PULLUP(MOTOR_DRIVER_1_YELLOW, "R70, R78"); // MOT34
+    success &= TEST_PULLUP(MOTOR_DRIVER_2_YELLOW, "R40, R58"); // MOT05
+    success &= TEST_PULLUP(S0_LED_GREEN, "R143");
+    success &= TEST_PULLUP(S1_LED_GREEN, "R134");
+    success &= TEST_PULLUP(S2_LED_GREEN, "R124");
+    success &= TEST_PULLUP(S3_LED_GREEN, "R152");
+    success &= TEST_PULLUP(S0_LED_YELLOW, "R149");
+    success &= TEST_PULLUP(S1_LED_YELLOW, "R140");
+    success &= TEST_PULLUP(S2_LED_YELLOW, "R130");
+    success &= TEST_PULLUP(S3_LED_YELLOW, "R160");
 
     /* internal pullups, skip */
     // success &= TEST_PULLUP(CHARGER_STAT);
