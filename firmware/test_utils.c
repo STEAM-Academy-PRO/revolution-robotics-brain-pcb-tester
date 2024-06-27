@@ -3,6 +3,7 @@
 #include <hal_delay.h>
 #include "atmel_start_pins.h"
 #include <hal_adc_sync.h>
+#include "SEGGER_RTT.h"
 
 static struct adc_sync_descriptor adcs[2];
 
@@ -28,37 +29,39 @@ void _indicate(uint8_t led, bool success)
 }
 
 // TODO: add a pin that must not change during this test
-bool _test_gpio(uint32_t driver, uint32_t sense)
+bool _test_gpio(gpio_t* driver, gpio_t* sense)
 {
     bool success = true;
 
-    gpio_set_pin_direction(driver, GPIO_DIRECTION_OUT);
+    gpio_set_pin_direction(driver->pin, GPIO_DIRECTION_OUT);
     //gpio_set_pin_direction(sense, GPIO_DIRECTION_OUT);
     //gpio_set_pin_level(sense, false);
     //gpio_set_pin_level(driver, false);
     //delay_ms(10u);
-    gpio_set_pin_direction(sense, GPIO_DIRECTION_IN);
+    gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_IN);
 
-    gpio_set_pin_level(driver, false);
+    gpio_set_pin_level(driver->pin, false);
     delay_ms(10u);
-    if (gpio_get_pin_level(sense) != 0u)
+    if (gpio_get_pin_level(sense->pin) != 0u)
     {
+        SEGGER_RTT_printf(0, "%s is driven low but %s measured high\n", driver->name, sense->name);
         success = false;
     }
 
-    gpio_set_pin_level(driver, true);
+    gpio_set_pin_level(driver->pin, true);
     delay_ms(10u);
-    if (gpio_get_pin_level(sense) != 1u)
+    if (gpio_get_pin_level(sense->pin) != 1u)
     {
+        SEGGER_RTT_printf(0, "%s is driven high but %s measured low\n", driver->name, sense->name);
         success = false;
     }
 
-    gpio_set_pin_direction(sense, GPIO_DIRECTION_OUT);
-    gpio_set_pin_level(driver, false);
-    gpio_set_pin_level(sense, false);
+    gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(driver->pin, false);
+    gpio_set_pin_level(sense->pin, false);
     delay_ms(10u);
-    gpio_set_pin_direction(driver, GPIO_DIRECTION_OFF);
-    gpio_set_pin_direction(sense, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(driver->pin, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_OFF);
 
     return success;
 }

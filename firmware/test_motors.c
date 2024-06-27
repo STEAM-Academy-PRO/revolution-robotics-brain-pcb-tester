@@ -6,8 +6,8 @@ typedef struct {
     uint32_t led_green;
     uint32_t led_yellow;
     uint32_t driver_en;
-    uint32_t enc_a;
-    uint32_t enc_b;
+    gpio_t enc_a;
+    gpio_t enc_b;
     uint32_t pwm_0;
     uint32_t pwm_1;
     uint32_t isen_adc_peripheral;
@@ -21,8 +21,8 @@ static motor_t m##n = { \
     .led_green  = M ## n ## _GREEN_LED, \
     .led_yellow = MOTOR_DRIVER_ ## driver ## _YELLOW, \
     .driver_en  = MOTOR_DRIVER_ ## driver ## _EN, \
-    .enc_a      = M ## n ## _ENC_A, \
-    .enc_b      = M ## n ## _ENC_B, \
+    .enc_a      = { .pin = M ## n ## _ENC_A, .name = "MOT" #n "_INT0" }, \
+    .enc_b      = { .pin = M ## n ## _ENC_B, .name = "MOT" #n "_INT1" }, \
     .pwm_0      = MOTOR_DRIVER_ ## driver ## _CH_ ## channel ## _PWM0_PIN, \
     .pwm_1      = MOTOR_DRIVER_ ## driver ## _CH_ ## channel ## _PWM1_PIN, \
     .isen_adc_peripheral = M ## n ## _ISEN_ADC, \
@@ -124,15 +124,21 @@ static void test_motor_port(motor_t* motor)
 {
     bool success = true;
 
-    if (!_test_gpio(ENCODER_DRIVER, motor->enc_a))
+    gpio_t encoder_driver = {
+        .pin = ENCODER_DRIVER,
+        .name = "PB18",
+    };
+
+    // TODO: these failures mean that a series resistor (e.g. R7) is faulty. We have tested the
+    // rest in the pullup tests. Testing separately, and not ENC_A to ENC_B means we can tell
+    // which resistor.
+    if (!_test_gpio(&encoder_driver, &motor->enc_a))
     {
-        SEGGER_RTT_printf(0, "%s encoder A test failed\n", motor->name);
         success = false;
     }
 
-    if (!_test_gpio(ENCODER_DRIVER, motor->enc_b))
+    if (!_test_gpio(&encoder_driver, &motor->enc_b))
     {
-        SEGGER_RTT_printf(0, "%s encoder B test failed\n", motor->name);
         success = false;
     }
 
