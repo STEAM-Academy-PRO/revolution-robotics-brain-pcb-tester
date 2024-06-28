@@ -33,6 +33,10 @@ typedef struct {
     const char* name;
 } gpio_t;
 
+
+void reset_result(void);
+bool get_result(void);
+
 void adc_init(void);
 
 void WS2812_Init(void);

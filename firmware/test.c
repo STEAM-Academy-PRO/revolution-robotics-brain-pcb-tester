@@ -40,6 +40,7 @@ static bool _test_pullup(uint32_t gpio, const char* gpio_name, const char* check
 
 void test_init(void)
 {
+    reset_result();
     WS2812_Init();
 
     gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OUT);
@@ -344,4 +345,17 @@ void test_end(void)
 
     gpio_set_pin_direction(TEST_ENABLE, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(TEST_CHARGER_EN, GPIO_DIRECTION_OFF);
+
+    if (get_result())
+    {
+        SEGGER_RTT_WriteString(0, "Test passed\n");
+    }
+    else
+    {
+        SEGGER_RTT_WriteString(0, "Test failed\n");
+    }
+
+    while (1) {
+        __BKPT(1);
+    }
 }

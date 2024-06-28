@@ -25,10 +25,6 @@ int main(void)
     test_sound();
 
     test_end();
-
-    while (1)
-    {
-    }
 }
 
 void NMI_Handler( void )

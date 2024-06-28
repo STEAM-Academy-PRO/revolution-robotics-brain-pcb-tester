@@ -7,6 +7,18 @@
 
 static struct adc_sync_descriptor adcs[2];
 
+static bool test_result;
+
+void reset_result(void)
+{
+    test_result = true;
+}
+
+bool get_result(void)
+{
+    return test_result;
+}
+
 void adc_init(void)
 {
     adc_sync_init(&adcs[0], ADC0);
@@ -25,6 +37,7 @@ void _indicate(uint8_t led, bool success)
     else
     {
         WS2812_SetLed(led, COLOR_RED);
+        test_result = false;
     }
 }
 
