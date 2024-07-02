@@ -44,6 +44,11 @@ static sensor_t* sensors[] = {
     &s3,
 };
 
+static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
+{
+    return _sysmon_analog_expect(adc, ch, lower, upper, 150.0f / 250.0f);
+}
+
 /**
  * Sensor port AIN tests.
  *
@@ -67,6 +72,7 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
         success = false;
     }
 
+    // TODO: why are these commented?
     /*gpio_set_pin_level(driver, false);
     if (!_analog_expect(adc, adc_ch, 0.0f, 200.0f))
     {
@@ -106,24 +112,20 @@ void test_sensor_port(sensor_t* sensor)
 {
     /* AIN pin is always connected to analog functions, no need to manually enable */
     bool success = true;
-    // TODO: these tests should be useful
-    /*if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
+    // TODO: these tests should be useful - why are they commented out?
+    /*if (!_test_gpio(sensor->gpio_in, sensor->sda))
     {
         success = false;
     }
-    if (!_test_gpio(S0_GPIO_IN, I2C0_SDApin))
+    if (!_test_gpio(sensor->sda, sensor->gpio_in))
     {
         success = false;
     }
-    if (!_test_gpio(I2C0_SDApin, S0_GPIO_IN))
+    if (!_test_gpio(sensor->gpio_out, sensor->scl))
     {
         success = false;
     }
-    if (!_test_gpio(S0_GPIO_OUT, I2C0_SCLpin))
-    {
-        success = false;
-    }
-    if (!_test_gpio(I2C0_SCLpin, S0_GPIO_OUT))
+    if (!_test_gpio(sensor->scl, sensor->gpio_out))
     {
         success = false;
     }*/

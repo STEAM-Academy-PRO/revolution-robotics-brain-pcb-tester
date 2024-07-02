@@ -46,6 +46,11 @@ static motor_t* motors[] = {
     &m5,
 };
 
+static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
+{
+    return _sysmon_analog_expect(adc, ch, lower, upper, 1.0f);
+}
+
 static bool _test_motor_driver(motor_t* motor)
 {
     struct test_case {
@@ -56,6 +61,8 @@ static bool _test_motor_driver(motor_t* motor)
         float current_max;
     };
 
+    // TODO: double check current values - do they contain a factor that should be removed
+    // now that _analog_expect doesn't have a divider?
     static const struct test_case cases[] = {
         { .dr_en = false, .pwm_0 = false, .pwm_1 = false, .current_min = 0.0f, .current_max = 0.5f},
         { .dr_en = false, .pwm_0 = false, .pwm_1 = true,  .current_min = 0.0f, .current_max = 0.5f},
@@ -71,10 +78,12 @@ static bool _test_motor_driver(motor_t* motor)
 
     bool success = true;
 
-    float motor_voltage = _read_analog(1u, ADC_CH_MOT_VOLTAGE) * 130.0f / 30.0f;
+    // Compare the measured current to the value calculated
+    // from input voltage and nominal resistance values.
+    float motor_input_voltage = _read_analog(1u, ADC_CH_MOT_VOLTAGE) * 130.0f / 30.0f;
     float dummy_resistance = 10.0f;
     float current_measure_resistance = 0.120f;
-    float nominal_current = motor_voltage / (dummy_resistance + current_measure_resistance);
+    float nominal_current = motor_input_voltage / (dummy_resistance + current_measure_resistance);
     float measured_voltage = current_measure_resistance * nominal_current;
 
     gpio_set_pin_direction(motor->pwm_0, GPIO_DIRECTION_OUT);

@@ -16,7 +16,17 @@ static bool _test_pullup(uint32_t gpio, const char* gpio_name, const char* check
     gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
     bool initial = gpio_get_pin_level(gpio) == 1u;
     if (!initial) {
-        _pullup_test_fail(gpio_name, "initial state not pulled up", check);
+        /* Try to detect if we have an external short circuit or just a broken connection. */
+        gpio_set_pin_pull_mode(gpio, GPIO_PULL_UP);
+        delay_ms(1);
+        bool internal = gpio_get_pin_level(gpio) == 1u;
+        if (internal) {
+            _pullup_test_fail(gpio_name, "initial state not pulled up", check);
+        } else {
+            _pullup_test_fail(gpio_name, "line is shorted low", check);
+        }
+
+        gpio_set_pin_pull_mode(gpio, GPIO_PULL_OFF);
     }
 
     /* pull them down and release them */

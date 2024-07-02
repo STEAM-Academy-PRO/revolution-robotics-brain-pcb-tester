@@ -41,39 +41,46 @@ void _indicate(uint8_t led, bool success)
     }
 }
 
+/**
+ * Asserts that driving one GPIO pin to a certain level results in another GPIO pin
+ * measuring the same level.
+ */
+bool _test_gpio_level(gpio_t* driver, gpio_t* sense, bool level)
+{
+    gpio_set_pin_level(driver->pin, level);
+    delay_ms(10u);
+    if (gpio_get_pin_level(sense->pin) != level)
+    {
+        const char* driver_level = level ? "high" : "low";
+        const char* sense_level = level ? "high" : "low";
+        SEGGER_RTT_printf(0, "%s is driven %s but %s measured %s\n", driver->name, driver_level, sense->name, sense_level);
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 // TODO: add a pin that must not change during this test
 bool _test_gpio(gpio_t* driver, gpio_t* sense)
 {
     bool success = true;
 
     gpio_set_pin_direction(driver->pin, GPIO_DIRECTION_OUT);
-    //gpio_set_pin_direction(sense, GPIO_DIRECTION_OUT);
-    //gpio_set_pin_level(sense, false);
-    //gpio_set_pin_level(driver, false);
-    //delay_ms(10u);
     gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_IN);
 
+    success &= _test_gpio_level(driver, sense, false);
+    success &= _test_gpio_level(driver, sense, true);
+
+    // Disable driver.
     gpio_set_pin_level(driver->pin, false);
-    delay_ms(10u);
-    if (gpio_get_pin_level(sense->pin) != 0u)
-    {
-        SEGGER_RTT_printf(0, "%s is driven low but %s measured high\n", driver->name, sense->name);
-        success = false;
-    }
+    gpio_set_pin_direction(driver->pin, GPIO_DIRECTION_OFF);
 
-    gpio_set_pin_level(driver->pin, true);
-    delay_ms(10u);
-    if (gpio_get_pin_level(sense->pin) != 1u)
-    {
-        SEGGER_RTT_printf(0, "%s is driven high but %s measured low\n", driver->name, sense->name);
-        success = false;
-    }
-
+    // Drive sense low to ensure capacitors are discharged.
     gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_OUT);
-    gpio_set_pin_level(driver->pin, false);
     gpio_set_pin_level(sense->pin, false);
     delay_ms(10u);
-    gpio_set_pin_direction(driver->pin, GPIO_DIRECTION_OFF);
     gpio_set_pin_direction(sense->pin, GPIO_DIRECTION_OFF);
 
     return success;
@@ -118,13 +125,6 @@ float _read_analog(uint32_t adc, uint32_t ch)
     sum = sum / (ARRAY_SIZE(buffer) - 2 * SKIPPED_EXTREMES);
 
     return map(sum, 0, 4095, 0, 3300); /* Vref = VDDANA */
-}
-
-bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
-{
-    float voltage = _read_analog(adc, ch) * (250.0f / 150.0f); /* compensate for voltage divider */
-
-    return lower < voltage && voltage < upper;
 }
 
 bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider)
