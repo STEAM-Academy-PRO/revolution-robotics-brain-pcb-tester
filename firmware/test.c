@@ -7,6 +7,9 @@ static void _pullup_test_fail(const char* gpio_name, const char* msg, const char
     SEGGER_RTT_printf(0, "Pullup test failed on pin %s: %s. Check components: %s\n", gpio_name, msg, check);
 }
 
+/**
+ * Assert that `gpio` has a pullup resistor.
+ */
 static bool _test_pullup(uint32_t gpio, const char* gpio_name, const char* check)
 {
     /* by default they should be pulled up */
@@ -96,10 +99,14 @@ void test_leds(void)
     delay_ms(1000u);
 }
 
+/**
+ * Test that pullup resistors (and associated components, MCU pins) are soldered correctly.
+ */
 void test_pullups(void)
 {
     bool success = true;
 
+    // 47k pulling up pin 1 of U16 to VDDIO. If VDDIO is low, the MCU should not come out of reset.
     success &= TEST_PULLUP(AMP_EN_sense, "R120");
 
     // IN pins are connected to AIN and SCL.
@@ -156,10 +163,13 @@ void test_pullups(void)
     success &= TEST_PULLUP(MOTOR_DRIVER_0_YELLOW, "R18, R21"); //MOT12
     success &= TEST_PULLUP(MOTOR_DRIVER_1_YELLOW, "R70, R78"); // MOT34
     success &= TEST_PULLUP(MOTOR_DRIVER_2_YELLOW, "R40, R58"); // MOT05
-    success &= TEST_PULLUP(S0_LED_GREEN, "R143");
-    success &= TEST_PULLUP(S1_LED_GREEN, "R134");
-    success &= TEST_PULLUP(S2_LED_GREEN, "R124");
-    success &= TEST_PULLUP(S3_LED_GREEN, "R152");
+
+    // Sensor port green LEDs have a series resistor (R1xx) and a pullup (R4x). The pullup ensures
+    // that the sensor port output power load switches are disabled by default.
+    success &= TEST_PULLUP(S0_LED_GREEN, "R143, R43");
+    success &= TEST_PULLUP(S1_LED_GREEN, "R134, R42");
+    success &= TEST_PULLUP(S2_LED_GREEN, "R124, R41");
+    success &= TEST_PULLUP(S3_LED_GREEN, "R152, R40");
     success &= TEST_PULLUP(S0_LED_YELLOW, "R149");
     success &= TEST_PULLUP(S1_LED_YELLOW, "R140");
     success &= TEST_PULLUP(S2_LED_YELLOW, "R130");
