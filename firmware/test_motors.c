@@ -3,8 +3,8 @@
 
 typedef struct {
     const char* name;
-    uint32_t led_green;
-    uint32_t led_yellow;
+    gpio_t led_green;
+    gpio_t led_yellow;
     uint32_t driver_en;
     gpio_t enc_a;
     gpio_t enc_b;
@@ -18,11 +18,11 @@ typedef struct {
 #define DECLARE_MOTOR_PORT(n, driver, channel) \
 static motor_t m##n = { \
     .name       = "Motor " #n, \
-    .led_green  = M ## n ## _GREEN_LED, \
-    .led_yellow = MOTOR_DRIVER_ ## driver ## _YELLOW, \
+    .led_green  = { .pin = M ## n ## _GREEN_LED, .name = "LED_GREEN" }, \
+    .led_yellow = { .pin = MOTOR_DRIVER_ ## driver ## _YELLOW, .name = "LED_YELLOW" }, \
     .driver_en  = MOTOR_DRIVER_ ## driver ## _EN, \
-    .enc_a      = { .pin = M ## n ## _ENC_A, .name = "MOT" #n "_INT0" }, \
-    .enc_b      = { .pin = M ## n ## _ENC_B, .name = "MOT" #n "_INT1" }, \
+    .enc_a      = { .pin = M ## n ## _ENC_A, .name = "MOT_INT0" }, \
+    .enc_b      = { .pin = M ## n ## _ENC_B, .name = "MOT_INT1" }, \
     .pwm_0      = MOTOR_DRIVER_ ## driver ## _CH_ ## channel ## _PWM0_PIN, \
     .pwm_1      = MOTOR_DRIVER_ ## driver ## _CH_ ## channel ## _PWM1_PIN, \
     .isen_adc_peripheral = M ## n ## _ISEN_ADC, \
@@ -121,6 +121,41 @@ void test_enable_motor_encoder_relays(void)
 {
     gpio_set_pin_level(TEST_ENABLE, true);
     delay_ms(1u);
+}
+
+static bool run_test_motor_pullups(motor_t* motor)
+{
+    bool success = true;
+
+    gpio_t* pins[4] = {
+        &motor->enc_a,
+        &motor->enc_b,
+        &motor->led_green,
+        &motor->led_yellow,
+    };
+
+    for (uint8_t i = 0u; i < ARRAY_SIZE(pins); i++)
+    {
+        if (!_test_pullup(pins[i]))
+        {
+            SEGGER_RTT_printf(0, "%s %s pullup test failed\n", motor->name, pins[i]->name);
+            success = false;
+        }
+    }
+
+    return success;
+}
+
+bool test_motor_pullups(void)
+{
+    bool success = true;
+
+    for (uint8_t i = 0u; i < ARRAY_SIZE(motors); i++)
+    {
+        success &= run_test_motor_pullups(motors[i]);
+    }
+
+    return success;
 }
 
 static void init_test_motor_port(motor_t* motor)

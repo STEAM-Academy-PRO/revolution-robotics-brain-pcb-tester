@@ -45,6 +45,8 @@ void test_imu(void);
 void test_sound(void);
 void test_end(void);
 
+bool test_motor_pullups(void);
+
 void imu_init(void);
 uint8_t imu_read_whoami(void);
 bool imu_run_selftest(void);
