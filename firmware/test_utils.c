@@ -142,7 +142,7 @@ static void _pullup_test_fail(const char* gpio_name, const char* msg)
 /**
  * Assert that `gpio` has a pullup resistor.
  */
-bool _test_pullup(gpio_t* gpio)
+bool _test_pullup(const gpio_t* gpio)
 {
     /* by default they should be pulled up */
     gpio_set_pin_direction(gpio->pin, GPIO_DIRECTION_IN);
@@ -179,4 +179,20 @@ bool _test_pullup(gpio_t* gpio)
     }
 
     return initial && pulldown && pullup;
+}
+
+bool _test_pullups(const char* category, const gpio_t** pins, size_t pin_count, const char* message)
+{
+    bool success = true;
+
+    for (size_t i = 0u; i < pin_count; i++)
+    {
+        if (!_test_pullup(pins[i]))
+        {
+            SEGGER_RTT_printf(0, "%s %s pullup test failed%s\n", category, pins[i]->name, message);
+            success = false;
+        }
+    }
+
+    return success;
 }

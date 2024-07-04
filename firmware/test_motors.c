@@ -131,25 +131,14 @@ static void test_disable_motor_encoder_relays(void)
 
 static bool _test_motor_pullups(motor_t* motor)
 {
-    bool success = true;
-
-    gpio_t* pins[4] = {
+    const gpio_t* pins[4] = {
         &motor->enc_a,
         &motor->enc_b,
         &motor->led_green,
         &motor->led_yellow,
     };
 
-    for (uint8_t i = 0u; i < ARRAY_SIZE(pins); i++)
-    {
-        if (!_test_pullup(pins[i]))
-        {
-            SEGGER_RTT_printf(0, "%s %s pullup test failed\n", motor->name, pins[i]->name);
-            success = false;
-        }
-    }
-
-    return success;
+    return _test_pullups(motor->name, pins, ARRAY_SIZE(pins), "");
 }
 
 static void init_test_motor_port(motor_t* motor)

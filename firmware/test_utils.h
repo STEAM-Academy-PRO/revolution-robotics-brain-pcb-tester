@@ -2,6 +2,7 @@
 #define TEST_UTILS_H_
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include "utils.h"
 
@@ -49,6 +50,7 @@ float map(float in, float min_in, float max_in, float min_out, float max_out);
 float _read_analog(uint32_t adc, uint32_t ch);
 bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider);
 
-bool _test_pullup(gpio_t* gpio);
+bool _test_pullup(const gpio_t* gpio);
+bool _test_pullups(const char* category, const gpio_t** pins, size_t pin_count, const char* message);
 
 #endif /* TEST_UTILS_H_ */

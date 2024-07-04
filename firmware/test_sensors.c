@@ -120,12 +120,12 @@ static bool test_sensor_pullups(sensor_t* sensor)
     // OUT and SDA are passing through the same level shifter as above.
     typedef struct {
         bool level;
-        const char* name;
+        const char* message;
     } test_case_t;
 
     const test_case_t tests[2] = {
-        { .level = false, .name = "3.3V" },
-        { .level = true, .name = "5V" },
+        { .level = false, .message = " with 3.3V" },
+        { .level = true,  .message = " with 5V" },
     };
 
     gpio_set_pin_direction(sensor->iovcc, GPIO_DIRECTION_OUT);
@@ -137,26 +137,14 @@ static bool test_sensor_pullups(sensor_t* sensor)
 
         delay_ms(10u);
 
-        if (!_test_pullup(&sensor->gpio_in))
-        {
-            SEGGER_RTT_printf(0, "%s GPIO_IN pullup test failed with %s\n", sensor->name, test->name);
-            success = false;
-        }
-        if (!_test_pullup(&sensor->gpio_out))
-        {
-            SEGGER_RTT_printf(0, "%s GPIO_OUT pullup test failed with %s\n", sensor->name, test->name);
-            success = false;
-        }
-        if (!_test_pullup(&sensor->sda))
-        {
-            SEGGER_RTT_printf(0, "%s SDA pullup test failed with %s\n", sensor->name, test->name);
-            success = false;
-        }
-        if (!_test_pullup(&sensor->scl))
-        {
-            SEGGER_RTT_printf(0, "%s SCL pullup test failed with %s\n", sensor->name, test->name);
-            success = false;
-        }
+        const gpio_t* pins[4] = {
+            &sensor->gpio_in,
+            &sensor->gpio_out,
+            &sensor->sda,
+            &sensor->scl,
+        };
+
+        success &= _test_pullups(sensor->name, pins, ARRAY_SIZE(pins), test->message);
     }
     gpio_set_pin_level(sensor->iovcc, false);
     gpio_set_pin_direction(sensor->iovcc, GPIO_DIRECTION_OFF);
@@ -164,18 +152,12 @@ static bool test_sensor_pullups(sensor_t* sensor)
     // Sensor port green LEDs have a series resistor (R1xx) and a pullup (R4x). The pullup ensures
     // that the sensor port output power load switches are disabled by default.
     // These tests also ensure that the RJ45 ports are placed.
-    if (!_test_pullup(&sensor->led_green))
-    {
-        SEGGER_RTT_printf(0, "%s LED_GREEN pullup test failed\n", sensor->name);
-        success = false;
-    }
-    if (!_test_pullup(&sensor->led_yellow))
-    {
-        SEGGER_RTT_printf(0, "%s LED_YELLOW pullup test failed\n", sensor->name);
-        success = false;
-    }
+    const gpio_t* pins[4] = {
+        &sensor->led_green,
+        &sensor->led_yellow,
+    };
 
-    return success;
+    return _test_pullups(sensor->name, pins, ARRAY_SIZE(pins), "");
 }
 
 void test_sensor_port(sensor_t* sensor)
