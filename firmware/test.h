@@ -37,15 +37,12 @@ void test_init(void);
 void test_leds(void);
 void test_pullups(void);
 void test_charger(void);
-void test_enable_motor_encoder_relays(void);
 void test_sensor_ports(void);
 void test_motor_ports(void);
 void test_supply_adc(void);
 void test_imu(void);
 void test_sound(void);
 void test_end(void);
-
-bool test_motor_pullups(void);
 
 void imu_init(void);
 uint8_t imu_read_whoami(void);

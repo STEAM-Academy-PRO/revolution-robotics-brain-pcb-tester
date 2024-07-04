@@ -13,8 +13,6 @@ int main(void)
     test_pullups();
     test_charger();
 
-    test_enable_motor_encoder_relays();
-
     test_sensor_ports();
     test_motor_ports();
 

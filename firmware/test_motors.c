@@ -117,13 +117,19 @@ static bool _test_motor_driver(motor_t* motor)
     return success;
 }
 
-void test_enable_motor_encoder_relays(void)
+static void test_enable_motor_encoder_relays(void)
 {
     gpio_set_pin_level(TEST_ENABLE, true);
     delay_ms(1u);
 }
 
-static bool run_test_motor_pullups(motor_t* motor)
+static void test_disable_motor_encoder_relays(void)
+{
+    gpio_set_pin_level(TEST_ENABLE, false);
+    delay_ms(1u);
+}
+
+static bool _test_motor_pullups(motor_t* motor)
 {
     bool success = true;
 
@@ -146,18 +152,6 @@ static bool run_test_motor_pullups(motor_t* motor)
     return success;
 }
 
-bool test_motor_pullups(void)
-{
-    bool success = true;
-
-    for (uint8_t i = 0u; i < ARRAY_SIZE(motors); i++)
-    {
-        success &= run_test_motor_pullups(motors[i]);
-    }
-
-    return success;
-}
-
 static void init_test_motor_port(motor_t* motor)
 {
     gpio_set_pin_direction(motor->driver_en, GPIO_DIRECTION_OUT);
@@ -167,6 +161,12 @@ static void init_test_motor_port(motor_t* motor)
 static void test_motor_port(motor_t* motor)
 {
     bool success = true;
+
+    // Test pullups while the connections are broken
+    success &= _test_motor_pullups(motor);
+
+    // Connect encoder lines
+    test_enable_motor_encoder_relays();
 
     gpio_t encoder_driver = {
         .pin = ENCODER_DRIVER,
@@ -191,6 +191,9 @@ static void test_motor_port(motor_t* motor)
         SEGGER_RTT_printf(0, "%s driver test failed\n", motor->name);
         success = false;
     }
+
+    // Disconnect encoder lines
+    test_disable_motor_encoder_relays();
 
     _indicate(motor->result_indicator, success);
 }

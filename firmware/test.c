@@ -72,8 +72,6 @@ void test_pullups(void)
     // 47k pulling up pin 1 of U16 to VDDIO. If VDDIO is low, the MCU should not come out of reset.
     success &= TEST_PULLUP(AMP_EN_sense, "R120");
 
-    success &= test_motor_pullups();
-
     /* internal pullups, skip */
     // success &= TEST_PULLUP(CHARGER_STAT);
     // success &= TEST_PULLUP(CHARGER_STBY);
