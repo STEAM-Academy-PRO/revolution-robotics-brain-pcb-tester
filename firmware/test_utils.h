@@ -33,7 +33,6 @@ typedef struct {
     const char* name;
 } gpio_t;
 
-
 void reset_result(void);
 bool get_result(void);
 
@@ -49,5 +48,7 @@ bool _test_gpio(gpio_t* driver, gpio_t* sense);
 float map(float in, float min_in, float max_in, float min_out, float max_out);
 float _read_analog(uint32_t adc, uint32_t ch);
 bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, float divider);
+
+bool _test_pullup(gpio_t* gpio);
 
 #endif /* TEST_UTILS_H_ */

@@ -2,54 +2,7 @@
 #include "test_utils.h"
 #include <tcc_lite.h>
 
-static void _pullup_test_fail(const char* gpio_name, const char* msg, const char* check)
-{
-    SEGGER_RTT_printf(0, "Pullup test failed on pin %s: %s. Check components: %s\n", gpio_name, msg, check);
-}
-
-/**
- * Assert that `gpio` has a pullup resistor.
- */
-static bool _test_pullup(uint32_t gpio, const char* gpio_name, const char* check)
-{
-    /* by default they should be pulled up */
-    gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
-    bool initial = gpio_get_pin_level(gpio) == 1u;
-    if (!initial) {
-        /* Try to detect if we have an external short circuit or just a broken connection. */
-        gpio_set_pin_pull_mode(gpio, GPIO_PULL_UP);
-        delay_ms(1);
-        bool internal = gpio_get_pin_level(gpio) == 1u;
-        if (internal) {
-            _pullup_test_fail(gpio_name, "initial state not pulled up", check);
-        } else {
-            _pullup_test_fail(gpio_name, "line is shorted low", check);
-        }
-
-        gpio_set_pin_pull_mode(gpio, GPIO_PULL_OFF);
-    }
-
-    /* pull them down and release them */
-    gpio_set_pin_direction(gpio, GPIO_DIRECTION_INOUT);
-    gpio_set_pin_level(TEST_ENABLE, false);
-    bool pulldown = gpio_get_pin_level(gpio) == 0u;
-    if (!pulldown) {
-        _pullup_test_fail(gpio_name, "not pulled down", check);
-    }
-
-    delay_ms(1);
-
-    gpio_set_pin_direction(gpio, GPIO_DIRECTION_IN);
-    delay_ms(1u);
-    bool pullup = gpio_get_pin_level(gpio) == 1u;
-    if (!pullup) {
-        _pullup_test_fail(gpio_name, "not pulled up", check);
-    }
-
-    return initial && pulldown && pullup;
-}
-
-#define TEST_PULLUP(gpio, check) _test_pullup(gpio, #gpio, check)
+#define TEST_PULLUP(gpio, check) _test_pullup(&(gpio_t){ .pin = gpio, .name = #gpio })
 
 void test_init(void)
 {
