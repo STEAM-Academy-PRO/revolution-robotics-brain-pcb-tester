@@ -7,12 +7,12 @@ typedef struct {
     uint32_t ain;
     uint32_t adc_per;
     uint32_t adc_ch;
-    uint32_t gpio_out;
-    uint32_t gpio_in;
-    uint32_t sda;
-    uint32_t scl;
-    uint32_t led_green;
-    uint32_t led_yellow;
+    gpio_t gpio_out;
+    gpio_t gpio_in;
+    gpio_t sda;
+    gpio_t scl;
+    gpio_t led_green;
+    gpio_t led_yellow;
     uint8_t result_indicator;
 } sensor_t;
 
@@ -23,12 +23,12 @@ static sensor_t s##n = { \
     .ain = S ## n ## _AIN, \
     .adc_per = S ## n ## _ADC_PER, \
     .adc_ch = S ## n ## _ADC_CH, \
-    .gpio_out = S ## n ## _GPIO_OUT, \
-    .gpio_in = S ## n ## _GPIO_IN, \
-    .sda = I2C ## n ## _SDApin, \
-    .scl = I2C ## n ## _SCLpin, \
-    .led_green = S ## n ## _LED_GREEN, \
-    .led_yellow = S ## n ## _LED_YELLOW, \
+    .gpio_out = (gpio_t) { .pin = S ## n ## _GPIO_OUT, .name = "GPIO_OUT" }, \
+    .gpio_in = (gpio_t) { .pin = S ## n ## _GPIO_IN, .name = "GPIO_IN" }, \
+    .sda = (gpio_t) { .pin = I2C ## n ## _SDApin, .name = "SDA" }, \
+    .scl = (gpio_t) { .pin = I2C ## n ## _SCLpin, .name = "SCL" }, \
+    .led_green = (gpio_t) { .pin = S ## n ## _LED_GREEN, .name = "LED_GREEN" }, \
+    .led_yellow = (gpio_t) { .pin = S ## n ## _LED_YELLOW, .name = "LED_YELLOW" }, \
     .result_indicator = TEST_S ## n ## _LED, \
 }
 
@@ -104,14 +104,87 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
 
 void init_test_sensor_port(sensor_t* sensor)
 {
-    gpio_set_pin_direction(sensor->led_green, GPIO_DIRECTION_OUT);
-    gpio_set_pin_level(sensor->led_green, false);
+    gpio_set_pin_direction(sensor->led_green.pin, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(sensor->led_green.pin, false);
+}
+
+static bool test_sensor_pullups(sensor_t* sensor)
+{
+    bool success = true;
+
+    // IN pins are connected to AIN and SCL.
+    // AIN has a 100K series resistor and a 150K pulldown.
+    // IN and SCL are passing through a level shifter. The level shifter has internal 10K pullups.
+    // AIN is tested separately during sensor port testing.
+    // OUT pins are connected to SDA.
+    // OUT and SDA are passing through the same level shifter as above.
+    typedef struct {
+        bool level;
+        const char* name;
+    } test_case_t;
+
+    const test_case_t tests[2] = {
+        { .level = false, .name = "3.3V" },
+        { .level = true, .name = "5V" },
+    };
+
+    gpio_set_pin_direction(sensor->iovcc, GPIO_DIRECTION_OUT);
+    for (size_t i = 0; i < 2; i++)
+    {
+        const test_case_t* test = &tests[i];
+
+        gpio_set_pin_level(sensor->iovcc, test->level);
+
+        delay_ms(10u);
+
+        if (!_test_pullup(&sensor->gpio_in))
+        {
+            SEGGER_RTT_printf(0, "%s GPIO_IN pullup test failed with %s\n", sensor->name, test->name);
+            success = false;
+        }
+        if (!_test_pullup(&sensor->gpio_out))
+        {
+            SEGGER_RTT_printf(0, "%s GPIO_OUT pullup test failed with %s\n", sensor->name, test->name);
+            success = false;
+        }
+        if (!_test_pullup(&sensor->sda))
+        {
+            SEGGER_RTT_printf(0, "%s SDA pullup test failed with %s\n", sensor->name, test->name);
+            success = false;
+        }
+        if (!_test_pullup(&sensor->scl))
+        {
+            SEGGER_RTT_printf(0, "%s SCL pullup test failed with %s\n", sensor->name, test->name);
+            success = false;
+        }
+    }
+    gpio_set_pin_level(sensor->iovcc, false);
+    gpio_set_pin_direction(sensor->iovcc, GPIO_DIRECTION_OFF);
+
+    // Sensor port green LEDs have a series resistor (R1xx) and a pullup (R4x). The pullup ensures
+    // that the sensor port output power load switches are disabled by default.
+    // These tests also ensure that the RJ45 ports are placed.
+    if (!_test_pullup(&sensor->led_green))
+    {
+        SEGGER_RTT_printf(0, "%s LED_GREEN pullup test failed\n", sensor->name);
+        success = false;
+    }
+    if (!_test_pullup(&sensor->led_yellow))
+    {
+        SEGGER_RTT_printf(0, "%s LED_YELLOW pullup test failed\n", sensor->name);
+        success = false;
+    }
+
+    return success;
 }
 
 void test_sensor_port(sensor_t* sensor)
 {
     /* AIN pin is always connected to analog functions, no need to manually enable */
     bool success = true;
+
+    success &= test_sensor_pullups(sensor);
+
     // TODO: these tests should be useful - why are they commented out?
     /*if (!_test_gpio(sensor->gpio_in, sensor->sda))
     {
@@ -131,7 +204,7 @@ void test_sensor_port(sensor_t* sensor)
     }*/
 
     // TODO: triple check these. GPIO_OUT should not be connected to AIN, GPIO_IN should be?
-    if (!_test_analog(sensor->gpio_out, sensor->iovcc, sensor->adc_per, sensor->adc_ch))
+    if (!_test_analog(sensor->gpio_out.pin, sensor->iovcc, sensor->adc_per, sensor->adc_ch))
     {
         SEGGER_RTT_printf(0, "%s analog test failed\n", sensor->name);
         success = false;

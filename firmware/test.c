@@ -72,36 +72,6 @@ void test_pullups(void)
     // 47k pulling up pin 1 of U16 to VDDIO. If VDDIO is low, the MCU should not come out of reset.
     success &= TEST_PULLUP(AMP_EN_sense, "R120");
 
-    // IN pins are connected to AIN and SCL.
-    // AIN has a 100K series resistor and a 150K pulldown.
-    // IN and SCL are passing through a level shifter. The level shifter has internal 10K pullups.
-    // AIN is tested separately during sensor port testing.
-    // Series resistors should be tested during sensor port tests.
-    success &= TEST_PULLUP(S0_GPIO_IN, "U19");
-    success &= TEST_PULLUP(S1_GPIO_IN, "U18");
-    success &= TEST_PULLUP(S2_GPIO_IN, "U17");
-    success &= TEST_PULLUP(S3_GPIO_IN, "U15");
-
-    // These don't test the resistors themselves, but the soldering of the level shifter.
-    success &= TEST_PULLUP(I2C0_SCLpin, "U19");
-    success &= TEST_PULLUP(I2C1_SCLpin, "U18");
-    success &= TEST_PULLUP(I2C2_SCLpin, "U17");
-    success &= TEST_PULLUP(I2C3_SCLpin, "U15");
-
-    // OUT pins are connected to SDA.
-    // OUT and SDA are passing through the same level shifter as above.
-    // Series resistors are tested elsewhere.
-    success &= TEST_PULLUP(S0_GPIO_OUT, "U19");
-    success &= TEST_PULLUP(S1_GPIO_OUT, "U18");
-    success &= TEST_PULLUP(S2_GPIO_OUT, "U17");
-    success &= TEST_PULLUP(S3_GPIO_OUT, "U15");
-
-    // These don't test the resistors themselves, but the soldering of the level shifter.
-    success &= TEST_PULLUP(I2C0_SDApin, "U19");
-    success &= TEST_PULLUP(I2C1_SDApin, "U18");
-    success &= TEST_PULLUP(I2C2_SDApin, "U17");
-    success &= TEST_PULLUP(I2C3_SDApin, "U15");
-
     // TODO: We should be able to narrow the components down based on the specific failure.
     success &= TEST_PULLUP(M0_ENC_A, "R39, R170, R46, C30, D21");
     success &= TEST_PULLUP(M1_ENC_A, "R23, R168, R32, C25, D13");
@@ -126,17 +96,6 @@ void test_pullups(void)
     success &= TEST_PULLUP(MOTOR_DRIVER_0_YELLOW, "R18, R21"); //MOT12
     success &= TEST_PULLUP(MOTOR_DRIVER_1_YELLOW, "R70, R78"); // MOT34
     success &= TEST_PULLUP(MOTOR_DRIVER_2_YELLOW, "R40, R58"); // MOT05
-
-    // Sensor port green LEDs have a series resistor (R1xx) and a pullup (R4x). The pullup ensures
-    // that the sensor port output power load switches are disabled by default.
-    success &= TEST_PULLUP(S0_LED_GREEN, "R143, R43");
-    success &= TEST_PULLUP(S1_LED_GREEN, "R134, R42");
-    success &= TEST_PULLUP(S2_LED_GREEN, "R124, R41");
-    success &= TEST_PULLUP(S3_LED_GREEN, "R152, R40");
-    success &= TEST_PULLUP(S0_LED_YELLOW, "R149");
-    success &= TEST_PULLUP(S1_LED_YELLOW, "R140");
-    success &= TEST_PULLUP(S2_LED_YELLOW, "R130");
-    success &= TEST_PULLUP(S3_LED_YELLOW, "R160");
 
     /* internal pullups, skip */
     // success &= TEST_PULLUP(CHARGER_STAT);
