@@ -185,6 +185,8 @@ void test_sensor_port(sensor_t* sensor)
         success = false;
     }*/
 
+    // TODO: test GPIOs for shorts
+
     // TODO: triple check these. GPIO_OUT should not be connected to AIN, GPIO_IN should be?
     if (!_test_analog(sensor->gpio_out.pin, sensor->iovcc, sensor->adc_per, sensor->adc_ch))
     {

@@ -141,6 +141,90 @@ static bool _test_motor_pullups(motor_t* motor)
     return _test_pullups(motor->name, pins, ARRAY_SIZE(pins), "");
 }
 
+static bool _test_motor_inputs_for_shorts(motor_t* motors[], uint8_t num_motors, uint8_t motor_idx)
+{
+    bool success = true;
+
+    // Set all tested pins to input
+    for (uint8_t i = 0u; i < num_motors; i++)
+    {
+        gpio_set_pin_direction(motors[i]->enc_a.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motors[i]->enc_b.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motors[i]->led_green.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motors[i]->led_yellow.pin, GPIO_DIRECTION_IN);
+    }
+
+    // We're pulling each of the encoder input pins down, one after the other.
+    // Then we verify that no other pins, that are pulled high by default, are pulled low.
+    // TODO: the driver is off, so we might be able to test other pins as well.
+    for (uint8_t i = 0u; i < 2; i++)
+    {
+        gpio_t* output_pin = i == 0 ? &motors[motor_idx]->enc_a : &motors[motor_idx]->enc_b;
+        gpio_t* sense_pin = i == 0 ? &motors[motor_idx]->enc_b : &motors[motor_idx]->enc_a;
+        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_OUT);
+        gpio_set_pin_level(output_pin->pin, false);
+
+        delay_ms(1u);
+
+        const char* motor_name = motors[motor_idx]->name;
+
+        // Test against the other input of the same motor port
+        if (gpio_get_pin_level(sense_pin->pin) == 0u)
+        {
+            SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", motor_name, output_pin->name, motor_name, sense_pin->name);
+            success = false;
+        }
+
+        const gpio_t* sense_motor_pins[3] = {
+            sense_pin,
+            &motors[motor_idx]->led_green,
+            &motors[motor_idx]->led_yellow,
+        };
+
+        for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
+        {
+            const gpio_t* sense_pin = sense_motor_pins[k];
+            if (gpio_get_pin_level(sense_pin->pin) == 0u)
+            {
+                SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", motor_name, output_pin->name, motor_name, sense_pin->name);
+                success = false;
+            }
+        }
+
+        // Test against both inputs of all the other motor ports
+        for (uint8_t j = 0u; j < num_motors; j++)
+        {
+            // Skip the motor we're testing
+            if (j == motor_idx)
+            {
+                continue;
+            }
+
+            const gpio_t* sense_motor_pins[4] = {
+                &motors[j]->enc_a,
+                &motors[j]->enc_b,
+                &motors[j]->led_green,
+                &motors[j]->led_yellow,
+            };
+
+            const char* sense_motor_name = motors[j]->name;
+            for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
+            {
+                const gpio_t* sense_pin = sense_motor_pins[k];
+                if (gpio_get_pin_level(sense_pin->pin) == 0u)
+                {
+                    SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", motor_name, output_pin->name, sense_motor_name, sense_pin->name);
+                    success = false;
+                }
+            }
+        }
+
+        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_IN);
+    }
+
+    return success;
+}
+
 static void init_test_motor_port(motor_t* motor)
 {
     gpio_set_pin_direction(motor->driver_en, GPIO_DIRECTION_OUT);
@@ -159,6 +243,11 @@ static void test_motor_ports_unconnected(void)
     }
 
     // TODO: test for short circuits
+    for (uint8_t i = 0u; i < ARRAY_SIZE(motors); i++)
+    {
+        success &= _test_motor_inputs_for_shorts(motors, ARRAY_SIZE(motors), i);
+        _indicate(motors[i]->result_indicator, success);
+    }
 }
 
 static void test_motor_port(motor_t* motor)
