@@ -147,15 +147,23 @@ static void init_test_motor_port(motor_t* motor)
     gpio_set_pin_level(motor->driver_en, false);
 }
 
-static void test_motor_port(motor_t* motor)
+static void test_motor_ports_unconnected(void)
 {
     bool success = true;
 
     // Test pullups while the connections are broken
-    success &= _test_motor_pullups(motor);
+    for (uint8_t i = 0u; i < ARRAY_SIZE(motors); i++)
+    {
+        success &= _test_motor_pullups(motors[i]);
+        _indicate(motors[i]->result_indicator, success);
+    }
 
-    // Connect encoder lines
-    test_enable_motor_encoder_relays();
+    // TODO: test for short circuits
+}
+
+static void test_motor_port(motor_t* motor)
+{
+    bool success = true;
 
     gpio_t encoder_driver = {
         .pin = ENCODER_DRIVER,
@@ -181,9 +189,6 @@ static void test_motor_port(motor_t* motor)
         success = false;
     }
 
-    // Disconnect encoder lines
-    test_disable_motor_encoder_relays();
-
     _indicate(motor->result_indicator, success);
 }
 
@@ -194,8 +199,16 @@ void test_motor_ports(void)
         init_test_motor_port(motors[i]);
     }
 
+    test_motor_ports_unconnected();
+
+    // Connect encoder lines
+    test_enable_motor_encoder_relays();
+
     for (uint8_t i = 0u; i < ARRAY_SIZE(motors); i++)
     {
         test_motor_port(motors[i]);
     }
+
+    // Disconnect encoder lines
+    test_disable_motor_encoder_relays();
 }
