@@ -7,16 +7,33 @@
 
 static struct adc_sync_descriptor adcs[2];
 
-static bool test_result;
+typedef enum {
+    ResultNotTested,
+    ResultSuccess,
+    ResultFailure
+} result_t;
+
+static result_t test_results[16] = { ResultNotTested };
 
 void reset_result(void)
 {
-    test_result = true;
+    for (uint8_t i = 0u; i < ARRAY_SIZE(test_results); i++)
+    {
+        test_results[i] = ResultNotTested;
+    }
 }
 
 bool get_result(void)
 {
-    return test_result;
+    for (uint8_t i = 0u; i < ARRAY_SIZE(test_results); i++)
+    {
+        if (test_results[i] != ResultSuccess)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void adc_init(void)
@@ -30,14 +47,30 @@ void adc_init(void)
 
 void _indicate(uint8_t led, bool success)
 {
+    // Record/update the result
     if (success)
     {
-        WS2812_SetLed(led, COLOR_GREEN);
+        test_results[led] = ResultSuccess;
     }
     else
     {
-        WS2812_SetLed(led, COLOR_RED);
-        test_result = false;
+        test_results[led] = ResultFailure;
+    }
+
+    // Update the LED
+    switch(test_results[led])
+    {
+        case ResultNotTested:
+            WS2812_SetLed(led, COLOR_BLUE);
+            break;
+
+        case ResultSuccess:
+            WS2812_SetLed(led, COLOR_GREEN);
+            break;
+
+        case ResultFailure:
+            WS2812_SetLed(led, COLOR_RED);
+            break;
     }
 }
 
@@ -49,17 +82,16 @@ bool _test_gpio_level(gpio_t* driver, gpio_t* sense, bool level)
 {
     gpio_set_pin_level(driver->pin, level);
     delay_ms(10u);
-    if (gpio_get_pin_level(sense->pin) != level)
-    {
-        const char* driver_level = level ? "high" : "low";
-        const char* sense_level = level ? "high" : "low";
-        SEGGER_RTT_printf(0, "%s is driven %s but %s measured %s\n", driver->name, driver_level, sense->name, sense_level);
-        return false;
-    }
-    else
+
+    if (gpio_get_pin_level(sense->pin) == level)
     {
         return true;
     }
+
+    const char* driver_level = level ? "high" : "low";
+    const char* sense_level = level ? "high" : "low";
+    SEGGER_RTT_printf(0, "%s is driven %s but %s measured %s\n", driver->name, driver_level, sense->name, sense_level);
+    return false;
 }
 
 // TODO: add a pin that must not change during this test
