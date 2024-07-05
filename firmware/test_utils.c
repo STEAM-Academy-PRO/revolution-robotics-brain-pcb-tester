@@ -23,10 +23,26 @@ void reset_result(void)
     }
 }
 
+static const char* result_to_str(result_t result)
+{
+    switch(result)
+    {
+        case ResultNotTested:
+            return "Not tested";
+        case ResultSuccess:
+            return "Success";
+        case ResultFailure:
+            return "Failure";
+    }
+
+    return "Unknown";
+}
+
 bool get_result(void)
 {
     for (uint8_t i = 0u; i < ARRAY_SIZE(test_results); i++)
     {
+        SEGGGER_RTT_printf(0, "Test %u: %s\n", i, result_to_str(test_results[i]));
         if (test_results[i] != ResultSuccess)
         {
             return false;
