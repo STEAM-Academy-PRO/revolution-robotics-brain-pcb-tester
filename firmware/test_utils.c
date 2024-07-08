@@ -42,7 +42,7 @@ bool get_result(void)
 {
     for (uint8_t i = 0u; i < ARRAY_SIZE(test_results); i++)
     {
-        SEGGGER_RTT_printf(0, "Test %u: %s\n", i, result_to_str(test_results[i]));
+        SEGGER_RTT_printf(0, "Test %u: %s\n", i, result_to_str(test_results[i]));
         if (test_results[i] != ResultSuccess)
         {
             return false;
@@ -94,7 +94,7 @@ void _indicate(uint8_t led, bool success)
  * Asserts that driving one GPIO pin to a certain level results in another GPIO pin
  * measuring the same level.
  */
-bool _test_gpio_level(gpio_t* driver, gpio_t* sense, bool level)
+bool _test_gpio_level(const gpio_t* driver, const gpio_t* sense, bool level)
 {
     gpio_set_pin_level(driver->pin, level);
     delay_ms(10u);
@@ -110,8 +110,7 @@ bool _test_gpio_level(gpio_t* driver, gpio_t* sense, bool level)
     return false;
 }
 
-// TODO: add a pin that must not change during this test
-bool _test_gpio(gpio_t* driver, gpio_t* sense)
+bool _test_gpio(const gpio_t* driver, const gpio_t* sense)
 {
     bool success = true;
 

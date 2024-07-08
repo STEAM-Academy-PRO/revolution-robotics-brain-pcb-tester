@@ -44,7 +44,7 @@ void WS2812_Write(uint8_t colors[16]);
 void WS2812_SetLed(uint8_t led, uint8_t color);
 
 void _indicate(uint8_t led, bool success);
-bool _test_gpio(gpio_t* driver, gpio_t* sense);
+bool _test_gpio(const gpio_t* driver, const gpio_t* sense);
 
 float map(float in, float min_in, float max_in, float min_out, float max_out);
 float _read_analog(uint32_t adc, uint32_t ch);

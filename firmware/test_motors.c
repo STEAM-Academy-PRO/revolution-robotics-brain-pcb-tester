@@ -37,7 +37,7 @@ DECLARE_MOTOR_PORT(3, 2, A);
 DECLARE_MOTOR_PORT(4, 2, B);
 DECLARE_MOTOR_PORT(5, 1, B);
 
-static motor_t* motors[] = {
+static const motor_t* motors[] = {
     &m0,
     &m1,
     &m2,
@@ -51,7 +51,7 @@ static bool _analog_expect(uint32_t adc, uint32_t ch, float lower, float upper)
     return _sysmon_analog_expect(adc, ch, lower, upper, 1.0f);
 }
 
-static bool _test_motor_driver(motor_t* motor)
+static bool _test_motor_driver(const motor_t* motor)
 {
     struct test_case {
         bool dr_en;
@@ -129,7 +129,7 @@ static void test_disable_motor_encoder_relays(void)
     delay_ms(1u);
 }
 
-static bool _test_motor_pullups(motor_t* motor)
+static bool _test_motor_pullups(const motor_t* motor)
 {
     const gpio_t* pins[4] = {
         &motor->enc_a,
@@ -141,7 +141,7 @@ static bool _test_motor_pullups(motor_t* motor)
     return _test_pullups(motor->name, pins, ARRAY_SIZE(pins), "");
 }
 
-static bool _test_motor_inputs_for_shorts(motor_t* motors[], uint8_t num_motors, uint8_t motor_idx)
+static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_motors, uint8_t motor_idx)
 {
     bool success = true;
 
@@ -159,8 +159,8 @@ static bool _test_motor_inputs_for_shorts(motor_t* motors[], uint8_t num_motors,
     // TODO: the driver is off, so we might be able to test other pins as well.
     for (uint8_t i = 0u; i < 2; i++)
     {
-        gpio_t* output_pin = i == 0 ? &motors[motor_idx]->enc_a : &motors[motor_idx]->enc_b;
-        gpio_t* sense_pin = i == 0 ? &motors[motor_idx]->enc_b : &motors[motor_idx]->enc_a;
+        const gpio_t* output_pin = i == 0 ? &motors[motor_idx]->enc_a : &motors[motor_idx]->enc_b;
+        const gpio_t* sense_pin = i == 0 ? &motors[motor_idx]->enc_b : &motors[motor_idx]->enc_a;
         gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_OUT);
         gpio_set_pin_level(output_pin->pin, false);
 
@@ -225,7 +225,7 @@ static bool _test_motor_inputs_for_shorts(motor_t* motors[], uint8_t num_motors,
     return success;
 }
 
-static void init_test_motor_port(motor_t* motor)
+static void init_test_motor_port(const motor_t* motor)
 {
     gpio_set_pin_direction(motor->driver_en, GPIO_DIRECTION_OUT);
     gpio_set_pin_level(motor->driver_en, false);
@@ -250,7 +250,7 @@ static void test_motor_ports_unconnected(void)
     }
 }
 
-static void test_motor_port(motor_t* motor)
+static void test_motor_port(const motor_t* motor)
 {
     bool success = true;
 

@@ -37,7 +37,7 @@ DECLARE_SENSOR_PORT(1);
 DECLARE_SENSOR_PORT(2);
 DECLARE_SENSOR_PORT(3);
 
-static sensor_t* sensors[] = {
+static const sensor_t* sensors[] = {
     &s0,
     &s1,
     &s2,
@@ -102,13 +102,13 @@ static bool _test_analog(uint32_t driver, uint32_t iovcc, uint32_t adc, uint32_t
     return success;
 }
 
-void init_test_sensor_port(sensor_t* sensor)
+void init_test_sensor_port(const sensor_t* sensor)
 {
     gpio_set_pin_direction(sensor->led_green.pin, GPIO_DIRECTION_OUT);
     gpio_set_pin_level(sensor->led_green.pin, false);
 }
 
-static bool test_sensor_pullups(sensor_t* sensor)
+static bool test_sensor_pullups(const sensor_t* sensor)
 {
     bool success = true;
 
@@ -160,7 +160,94 @@ static bool test_sensor_pullups(sensor_t* sensor)
     return _test_pullups(sensor->name, pins, ARRAY_SIZE(pins), "");
 }
 
-void test_sensor_port(sensor_t* sensor)
+static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_sensors, uint8_t sensor_idx)
+{
+    bool success = true;
+
+    // Set all tested pins to input
+    for (uint8_t i = 0u; i < num_sensors; i++)
+    {
+        gpio_set_pin_direction(sensors[i]->gpio_in.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(sensors[i]->gpio_out.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(sensors[i]->scl.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(sensors[i]->sda.pin, GPIO_DIRECTION_IN);
+    }
+
+    // We're pulling each of the driver pins down, one after the other.
+    // Then we verify that no other pins, that are pulled high by default, are pulled low.
+    for (uint8_t i = 0u; i < 2; i++)
+    {
+        // Since IN is shorted to SDA in the test jig, it makes no sense to test it for shorts.
+        // Instead, we test IN to SCL and then OUT to SDA.
+        const gpio_t* output_pin = i == 0 ? &sensors[sensor_idx]->gpio_in : &sensors[sensor_idx]->gpio_out;
+        const gpio_t* sense_pin = i == 0 ? &sensors[sensor_idx]->scl : &sensors[sensor_idx]->sda;
+        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_OUT);
+        gpio_set_pin_level(output_pin->pin, false);
+
+        delay_ms(1u);
+
+        const char* sensor_name = sensors[sensor_idx]->name;
+
+        // Test against the other input of the same motor port
+        if (gpio_get_pin_level(sense_pin->pin) == 0u)
+        {
+            SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sensor_name, sense_pin->name);
+            success = false;
+        }
+
+        const gpio_t* sense_motor_pins[3] = {
+            sense_pin,
+            &sensors[sensor_idx]->led_green,
+            &sensors[sensor_idx]->led_yellow,
+        };
+
+        for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
+        {
+            const gpio_t* sense_pin = sense_motor_pins[k];
+            if (gpio_get_pin_level(sense_pin->pin) == 0u)
+            {
+                SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sensor_name, sense_pin->name);
+                success = false;
+            }
+        }
+
+        // Test against both inputs of all the other motor ports
+        for (uint8_t j = 0u; j < num_sensors; j++)
+        {
+            // Skip the motor we're testing
+            if (j == sensor_idx)
+            {
+                continue;
+            }
+
+            const gpio_t* sense_motor_pins[6] = {
+                &sensors[j]->gpio_in,
+                &sensors[j]->gpio_out,
+                &sensors[j]->sda,
+                &sensors[j]->scl,
+                &sensors[j]->led_green,
+                &sensors[j]->led_yellow,
+            };
+
+            const char* sense_sensor_name = sensors[j]->name;
+            for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
+            {
+                const gpio_t* sense_pin = sense_motor_pins[k];
+                if (gpio_get_pin_level(sense_pin->pin) == 0u)
+                {
+                    SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sense_sensor_name, sense_pin->name);
+                    success = false;
+                }
+            }
+        }
+
+        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_IN);
+    }
+
+    return success;
+}
+
+void test_sensor_port(const sensor_t* sensor)
 {
     /* AIN pin is always connected to analog functions, no need to manually enable */
     bool success = true;
@@ -185,7 +272,15 @@ void test_sensor_port(sensor_t* sensor)
         success = false;
     }*/
 
-    // TODO: test GPIOs for shorts
+    // Test GPIOs for shorts. Pins are shorted in two groups by the test jig:
+    // - IN to SDA
+    // - OUT to SCL and AIN
+    // We need to test that IN and OUT are not shorted.
+    for (uint8_t i = 0u; i < ARRAY_SIZE(sensors); i++)
+    {
+        success &= _test_sensor_gpio_short(sensors, ARRAY_SIZE(sensors), i);
+        _indicate(sensors[i]->result_indicator, success);
+    }
 
     // TODO: triple check these. GPIO_OUT should not be connected to AIN, GPIO_IN should be?
     if (!_test_analog(sensor->gpio_out.pin, sensor->iovcc, sensor->adc_per, sensor->adc_ch))
