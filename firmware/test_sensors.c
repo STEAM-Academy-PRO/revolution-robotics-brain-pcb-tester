@@ -189,12 +189,6 @@ static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_senso
         const char* sensor_name = sensors[sensor_idx]->name;
 
         // Test against the other input of the same motor port
-        if (gpio_get_pin_level(sense_pin->pin) == 0u)
-        {
-            SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sensor_name, sense_pin->name);
-            success = false;
-        }
-
         const gpio_t* sense_pins[3] = {
             sense_pin,
             &sensors[sensor_idx]->led_green,
