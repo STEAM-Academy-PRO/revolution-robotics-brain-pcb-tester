@@ -243,3 +243,20 @@ bool _test_pullups(const char* category, const gpio_t** pins, size_t pin_count, 
 
     return success;
 }
+
+bool _assert_pins_high_for_short(const gpio_t* output_pin, const gpio_t* sense_pins[], uint8_t num_pins, const char* port_name, const char* sense_port_name)
+{
+    bool success = true;
+
+    for (uint8_t k = 0u; k < num_pins; k++)
+    {
+        const gpio_t* sense_pin = sense_pins[k];
+        if (gpio_get_pin_level(sense_pin->pin) == 0u)
+        {
+            SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", port_name, output_pin->name, sense_port_name, sense_pin->name);
+            success = false;
+        }
+    }
+
+    return success;
+}

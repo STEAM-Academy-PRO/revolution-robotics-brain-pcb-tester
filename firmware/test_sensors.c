@@ -195,21 +195,13 @@ static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_senso
             success = false;
         }
 
-        const gpio_t* sense_motor_pins[3] = {
+        const gpio_t* sense_pins[3] = {
             sense_pin,
             &sensors[sensor_idx]->led_green,
             &sensors[sensor_idx]->led_yellow,
         };
 
-        for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
-        {
-            const gpio_t* sense_pin = sense_motor_pins[k];
-            if (gpio_get_pin_level(sense_pin->pin) == 0u)
-            {
-                SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sensor_name, sense_pin->name);
-                success = false;
-            }
-        }
+        success &= _assert_pins_high_for_short(output_pin, &sense_pins[0], ARRAY_SIZE(sense_pins), sensor_name, sensor_name);
 
         // Test against both inputs of all the other motor ports
         for (uint8_t j = 0u; j < num_sensors; j++)
@@ -220,7 +212,7 @@ static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_senso
                 continue;
             }
 
-            const gpio_t* sense_motor_pins[6] = {
+            const gpio_t* sense_pins[6] = {
                 &sensors[j]->gpio_in,
                 &sensors[j]->gpio_out,
                 &sensors[j]->sda,
@@ -230,15 +222,7 @@ static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_senso
             };
 
             const char* sense_sensor_name = sensors[j]->name;
-            for (uint8_t k = 0u; k < ARRAY_SIZE(sense_motor_pins); k++)
-            {
-                const gpio_t* sense_pin = sense_motor_pins[k];
-                if (gpio_get_pin_level(sense_pin->pin) == 0u)
-                {
-                    SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", sensor_name, output_pin->name, sense_sensor_name, sense_pin->name);
-                    success = false;
-                }
-            }
+            success &= _assert_pins_high_for_short(output_pin, &sense_pins[0], ARRAY_SIZE(sense_pins), sensor_name, sense_sensor_name);
         }
 
         gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_IN);

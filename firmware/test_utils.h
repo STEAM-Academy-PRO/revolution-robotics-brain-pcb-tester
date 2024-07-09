@@ -53,4 +53,6 @@ bool _sysmon_analog_expect(uint32_t adc, uint32_t ch, float lower, float upper, 
 bool _test_pullup(const gpio_t* gpio);
 bool _test_pullups(const char* category, const gpio_t** pins, size_t pin_count, const char* message);
 
+bool _assert_pins_high_for_short(const gpio_t* output_pin, const gpio_t* sense_pins[], uint8_t num_pins, const char* port_name, const char* sense_port_name);
+
 #endif /* TEST_UTILS_H_ */
