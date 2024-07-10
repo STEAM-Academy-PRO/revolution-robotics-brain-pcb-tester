@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "probe-rs attach",
+            "type": "probe-rs-debug",
+            "request": "attach",
+            "chip": "atsamd51p19a",
+            "coreConfigs": [
+                {
+                    "programBinary": "firmware/Build/Debug/mcu-tester/rrrc_eoltest.elf",
+                    "rttEnabled": true,
+                    "rttChannelFormats": [
+                        {
+                            "channelNumber": 0,
+                            "dataFormat": "String",
+                            "showLocation": false,
+                            "showTimestamps": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

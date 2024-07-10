@@ -1,2 +1,3 @@
 package/
 firmware/Build/
+.vscode/launch.json
