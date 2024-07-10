@@ -152,7 +152,7 @@ static bool test_sensor_pullups(const sensor_t* sensor)
     // Sensor port green LEDs have a series resistor (R1xx) and a pullup (R4x). The pullup ensures
     // that the sensor port output power load switches are disabled by default.
     // These tests also ensure that the RJ45 ports are placed.
-    const gpio_t* pins[4] = {
+    const gpio_t* pins[2] = {
         &sensor->led_green,
         &sensor->led_yellow,
     };
