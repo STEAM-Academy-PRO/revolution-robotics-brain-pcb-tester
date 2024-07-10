@@ -146,12 +146,13 @@ static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_m
     bool success = true;
 
     // Set all tested pins to input
+    const motor_t* motor = motors[motor_idx];
     for (uint8_t i = 0u; i < num_motors; i++)
     {
-        gpio_set_pin_direction(motors[i]->enc_a.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motors[i]->enc_b.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motors[i]->led_green.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motors[i]->led_yellow.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motor->enc_a.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motor->enc_b.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motor->led_green.pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(motor->led_yellow.pin, GPIO_DIRECTION_IN);
     }
 
     // We're pulling each of the encoder input pins down, one after the other.
@@ -159,23 +160,21 @@ static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_m
     // TODO: the driver is off, so we might be able to test other pins as well.
     for (uint8_t i = 0u; i < 2; i++)
     {
-        const gpio_t* output_pin = i == 0 ? &motors[motor_idx]->enc_a : &motors[motor_idx]->enc_b;
-        const gpio_t* sense_pin = i == 0 ? &motors[motor_idx]->enc_b : &motors[motor_idx]->enc_a;
+        const gpio_t* output_pin = i == 0 ? &motor->enc_a : &motor->enc_b;
+        const gpio_t* sense_pin = i == 0 ? &motor->enc_b : &motor->enc_a;
         gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_OUT);
         gpio_set_pin_level(output_pin->pin, false);
 
         delay_ms(1u);
 
-        const char* motor_name = motors[motor_idx]->name;
-
         // Test against the other input of the same motor port
         const gpio_t* sense_pins[3] = {
             sense_pin,
-            &motors[motor_idx]->led_green,
-            &motors[motor_idx]->led_yellow,
+            &motor->led_green,
+            &motor->led_yellow,
         };
 
-        success &= _assert_pins_high_for_short(output_pin, &sense_pins[0], ARRAY_SIZE(sense_pins), motor_name, motor_name);
+        success &= _assert_pins_high_for_short(output_pin, sense_pins, ARRAY_SIZE(sense_pins), motor->name, motor->name);
 
         // Test against both inputs of all the other motor ports
         for (uint8_t j = 0u; j < num_motors; j++)
@@ -186,15 +185,15 @@ static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_m
                 continue;
             }
 
+            const motor_t* sense_motor = motors[j];
             const gpio_t* sense_pins[4] = {
-                &motors[j]->enc_a,
-                &motors[j]->enc_b,
-                &motors[j]->led_green,
-                &motors[j]->led_yellow,
+                &sense_motor->enc_a,
+                &sense_motor->enc_b,
+                &sense_motor->led_green,
+                &sense_motor->led_yellow,
             };
 
-            const char* sense_motor_name = motors[j]->name;
-            success &= _assert_pins_high_for_short(output_pin, &sense_pins[0], ARRAY_SIZE(sense_pins), motor_name, sense_motor_name);
+            success &= _assert_pins_high_for_short(output_pin, sense_pins, ARRAY_SIZE(sense_pins), motor->name, sense_motor->name);
         }
 
         gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_IN);
