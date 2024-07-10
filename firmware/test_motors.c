@@ -145,19 +145,10 @@ static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_m
 {
     bool success = true;
 
-    // Set all tested pins to input
-    const motor_t* motor = motors[motor_idx];
-    for (uint8_t i = 0u; i < num_motors; i++)
-    {
-        gpio_set_pin_direction(motor->enc_a.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motor->enc_b.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motor->led_green.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(motor->led_yellow.pin, GPIO_DIRECTION_IN);
-    }
-
     // We're pulling each of the encoder input pins down, one after the other.
     // Then we verify that no other pins, that are pulled high by default, are pulled low.
     // TODO: the driver is off, so we might be able to test other pins as well.
+    const motor_t* motor = motors[motor_idx];
     for (uint8_t i = 0u; i < 2; i++)
     {
         const gpio_t* output_pin = i == 0 ? &motor->enc_a : &motor->enc_b;
@@ -196,7 +187,7 @@ static bool _test_motor_inputs_for_shorts(const motor_t* motors[], uint8_t num_m
             success &= _assert_pins_high_for_short(output_pin, sense_pins, ARRAY_SIZE(sense_pins), motor->name, sense_motor->name);
         }
 
-        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_IN);
+        gpio_set_pin_direction(output_pin->pin, GPIO_DIRECTION_OFF);
     }
 
     return success;

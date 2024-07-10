@@ -251,11 +251,13 @@ bool _assert_pins_high_for_short(const gpio_t* output_pin, const gpio_t* sense_p
     for (uint8_t k = 0u; k < num_pins; k++)
     {
         const gpio_t* sense_pin = sense_pins[k];
+        gpio_set_pin_direction(sense_pin->pin, GPIO_DIRECTION_IN);
         if (gpio_get_pin_level(sense_pin->pin) == 0u)
         {
             SEGGER_RTT_printf(0, "%s %s and %s %s are shorted\n", port_name, output_pin->name, sense_port_name, sense_pin->name);
             success = false;
         }
+        gpio_set_pin_direction(sense_pin->pin, GPIO_DIRECTION_OFF);
     }
 
     return success;

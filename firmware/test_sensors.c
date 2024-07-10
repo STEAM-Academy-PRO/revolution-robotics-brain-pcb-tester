@@ -164,18 +164,9 @@ static bool _test_sensor_gpio_short(const sensor_t* sensors[], uint8_t num_senso
 {
     bool success = true;
 
-    // Set all tested pins to input
-    const sensor_t* sensor = sensors[sensor_idx];
-    for (uint8_t i = 0u; i < num_sensors; i++)
-    {
-        gpio_set_pin_direction(sensor->gpio_in.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(sensor->gpio_out.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(sensor->scl.pin, GPIO_DIRECTION_IN);
-        gpio_set_pin_direction(sensor->sda.pin, GPIO_DIRECTION_IN);
-    }
-
     // We're pulling each of the driver pins down, one after the other.
     // Then we verify that no other pins, that are pulled high by default, are pulled low.
+    const sensor_t* sensor = sensors[sensor_idx];
     for (uint8_t i = 0u; i < 2; i++)
     {
         // Since IN is shorted to SDA in the test jig, it makes no sense to test it for shorts.
